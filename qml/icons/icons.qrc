@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>color_classifier_switch.png</file>
+        <file>left_round.png</file>
+        <file>right_round.png</file>
+        <file>analysis_panel_btn.png</file>
+        <file>analysis_haarlike.png</file>
+        <file>analysis_lbp.png</file>
+        <file>analysis_pixels.png</file>
+    </qresource>
+</RCC>
