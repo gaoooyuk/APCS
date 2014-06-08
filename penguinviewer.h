@@ -18,11 +18,25 @@ class PenguinViewer : public QQuickPaintedItem
     Q_PROPERTY(QString imagePath READ imagePath WRITE setImage)
     Q_PROPERTY(QString currentFPS READ currentFPS NOTIFY fpsChanged)
 
+    Q_ENUMS(SurveillanceStatus)
+    Q_PROPERTY(SurveillanceStatus status READ status NOTIFY statusChanged)
+
 public:
     PenguinViewer(QQuickItem *parent = 0);
+    ~PenguinViewer();
+
+    enum SurveillanceStatus {
+        Idel,
+        Buffering,
+        Running,
+        Error
+    };
+
     void paint(QPainter *painter);
     QList< QVector<QPointF> > detectPenguins(cv::Mat videoFrame);
     QString currentFPS();
+
+    PenguinViewer::SurveillanceStatus status() const;
 
 public slots:
     bool applyColorFilter();
@@ -36,6 +50,7 @@ public slots:
 
 signals:
     void fpsChanged();
+    void statusChanged();
 
 private:
     QImage m_image;
@@ -52,6 +67,7 @@ private:
     int m_frameCount;
     float m_currentFPS;
 
+    SurveillanceStatus m_surveillanceStatus;
 };
 
 #endif // PENGUINVIEWER_H

@@ -25,6 +25,7 @@ class ViolaJonesClassifier : public QObject
 public:
     explicit ViolaJonesClassifier(QObject *parent = 0);
 
+    void setParams(double scaleFactor, int minNeighbours, QSize minSize);
     QList< QVector<QPointF> > detectPenguins(cv::Mat videoFrame);
     std::vector<cv::Rect> detect(cv::Mat frame);
     void rotate(cv::Mat& src, double angle, cv::Mat& dst);
@@ -33,6 +34,10 @@ private:
     cv::CascadeClassifier m_classifier;
     std::vector<std::string> m_cascade_xmls;
     QHash< QString, QList< QVector<QPointF> > > m_colorRects;
+
+    double m_scaleFactor;
+    int m_minNeighbours;
+    QSize m_minSize;
 };
 
 #endif // VIOLAJONESCLASSIFIER_H

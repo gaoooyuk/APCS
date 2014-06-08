@@ -2,7 +2,7 @@
    the system and output. */
 
 /* How many samples in the distribution? */
-#define NSamples (60)
+#define NSamples (1000)
 
 /* How many iterations to run the filter? */
 #define NIterations (100)
@@ -11,7 +11,6 @@
    process */
 #define SimulatedMean (-0.1)
 #define SimulatedScaling (1)
-//#define SimulatedSigma (0.075)
 #define SimulatedSigma (1)
 #define SimulatedMeasSigma (0.03)
 
@@ -28,11 +27,10 @@
      (x_t - ProcessMean) * ProcessScaling + ProcessSigma * w_t
 
    where w_t is zero-mean unit iid Gaussian noise. */
-#define ProcessMean (-1)
+#define ProcessMean (0)
 #define ProcessScaling (1)
-//#define ProcessSigma (0.075)
 #define ProcessSigma (10)
 
 /* The observation density is a mixture of Gaussians, where each
    observed object has a different sigma as follows. */
-#define ObsSigma (0.03)
+#define ObsSigma (200)

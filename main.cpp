@@ -1,7 +1,11 @@
-#include <QtGui/QGuiApplication>
+#include <QApplication>
 #include <QFile>
 #include <QQmlEngine>
 #include <QQmlContext>
+#include <QPixmap>
+#include <QSplashScreen>
+#include <QTimer>
+
 
 #include "qtquick2applicationviewer.h"
 #include "cascadeparser.h"
@@ -11,46 +15,59 @@
 #include "colormapitem.h"
 
 #include "penguinviewer.h"
-#include "lbpitem.h"
+#include "featureitem.h"
+#include "trainingsystem.h"
 
 #include <QDebug>
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
+
+    QPixmap pixmap(":/qml/icons/APCS_Logo.png");
+    QSplashScreen splash(pixmap);
+    splash.showMessage(QString("Initialize African Penguin Counter System"), Qt::AlignLeft | Qt::AlignBottom, Qt::white);
+
+    QTimer splashTimer;
+    QObject::connect(&splashTimer, SIGNAL(timeout()), &splash, SLOT(close()));
+
+    splash.show();
+    splashTimer.start(1000);
 
     qmlRegisterType<HaarFeatureItem>("Cascade", 1, 0, "HaarFeatureItem");
     qmlRegisterType<ColorMapItem>("Analysis", 1, 0, "ColorMapItem");
     qmlRegisterType<PenguinViewer>("Core", 1, 0, "PenguinViewer");
-    qmlRegisterType<LbpItem>("Analysis", 1, 0, "LbpItem");
+    qmlRegisterType<FeatureItem>("Analysis", 1, 0, "FeatureItem");
+    qmlRegisterType<TrainingSystem>("Core", 1, 0, "TrainingSystem");
 
     QtQuick2ApplicationViewer viewer;
-    viewer.setMainQmlFile(QStringLiteral("qml/CascadeVisualizer/main.qml"));
+    viewer.setMainQmlFile(QStringLiteral("qml/APCS/main.qml"));
     viewer.showExpanded();
 
-    QString fileName("/Users/apple/Desktop/Courses/Penguin/prototype/cascade_45.xml");
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text))
-    {
-        return -1;
-    }
+//    QString fileName("/Users/apple/Desktop/Courses/Penguin/prototype/cascade_45.xml");
+//    QFile file(fileName);
+//    if (!file.open(QFile::ReadOnly | QFile::Text))
+//    {
+//        return -1;
+//    }
 
-    CascadeParser parser;
-    if (!parser.read(&file))
-    {
-    }
+//    CascadeParser parser;
+//    if (!parser.read(&file))
+//    {
+//    }
 
-    CascadeObject cascadeObj = parser.getCascadeObject();
+//    CascadeObject cascadeObj = parser.getCascadeObject();
 //    cascadeObj.prune(5);
 
-    HaarFeatureItem *haarItem = viewer.rootObject()->findChild<HaarFeatureItem*>("haarItem");
-    if (NULL == haarItem)
-        qDebug() << "Can't find haarItem";
-
-    for (int i = 0; i < cascadeObj.featureNum(); i++)
-    {
-        haarItem->appendFeature(cascadeObj.getFeature(i));
-    }
+//    HaarFeatureItem *haarItem = viewer.rootObject()->findChild<HaarFeatureItem*>("haarItem");
+//    if (NULL == haarItem) {
+//        qDebug() << "Can't find haarItem";
+//    } else {
+//        for (int i = 0; i < cascadeObj.featureNum(); i++)
+//        {
+//            haarItem->appendFeature(cascadeObj.getFeature(i));
+//        }
+//    }
 
 //    QFile wFile("/Users/apple/Desktop/Courses/Penguin/prototype/cascade_45_pruned.xml");
 //    if (!wFile.open(QFile::WriteOnly | QFile::Truncate))

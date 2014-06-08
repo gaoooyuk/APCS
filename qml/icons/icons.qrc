@@ -7,5 +7,15 @@
         <file>analysis_haarlike.png</file>
         <file>analysis_lbp.png</file>
         <file>analysis_pixels.png</file>
+        <file>APCS_Logo.png</file>
+        <file>module_surveillance.png</file>
+        <file>module_training.png</file>
+        <file>demoBtnLeft.png</file>
+        <file>demoBtnRight.png</file>
+        <file>panel_style_1.png</file>
+        <file>titleBar_1.png</file>
+        <file>randomForest.png</file>
+        <file>playBtn.png</file>
+        <file>stopBtn.png</file>
     </qresource>
 </RCC>

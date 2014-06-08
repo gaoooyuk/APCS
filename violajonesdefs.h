@@ -7,6 +7,9 @@
 #define PI 3.14159265
 
 // Penguin descriptors in different poses
+
+#define penguin_cascade "cascade.xml"   // usually used for test
+
 // Frontal
 #define penguin_cascade_frontal "cascade_frontal.xml"
 //#define penguin_cascade_frontal "cascade_frontal_pruned.xml"

@@ -28,7 +28,8 @@ typedef struct _SceneModel {
    This structure stores the true position of the simulated particle,
    and its measured position, which is corrupted by noise. */
 typedef struct _MeasData {
-  QPointF truePos, observed;
+  QPointF truePos;
+  QList<QPointF> observed;
 } MeasData;
 
 /* The prior distribution of the state is taken to be Gaussian with

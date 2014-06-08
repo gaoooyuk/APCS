@@ -83,12 +83,22 @@ Tracker::Tracker(QObject *parent) :
     QObject(parent)
 {
     m_initialized = false;
+
+    m_frameWidth = 0;
+    m_frameHeight = 0;
+
     m_initX = 0.0f;    // start x position
     m_initY = 0.0f;    // start y position
     m_initWidth = 0;
     m_initHeight = 0;
 
     m_isLost = false;
+}
+
+void Tracker::setFrameSize(int width, int height)
+{
+    m_frameWidth = width;
+    m_frameHeight = height;
 }
 
 void Tracker::setInitialState(double x, double y, int width, int height)
@@ -101,19 +111,15 @@ void Tracker::setInitialState(double x, double y, int width, int height)
     m_initHeight = height;
 }
 
-void Tracker::propagate(cv::Mat frame)
+void Tracker::propagate(QList<QPointF> obs)
 {
-    //    qDebug() << "Tracker::propagate -->";
-    m_currentFrame = frame;
-
     if (!m_initialized)
         initialise();
 
-    condensation_obtain_observations();     /* Go make necessary measurements */
+    condensation_obtain_observations(obs);     /* Go make necessary measurements */
     condensation_predict_new_bases();       /* Push previous state through process model */
     condensation_calculate_base_weights();  /* Apply Bayesian measurement weighting */
     condensation_update_after_iterating(); /* Tidy up, display output, etc. */
-    //    qDebug() << "<-- Tracker::propagate";
 }
 
 QList<QPointF> Tracker::getCandidates()
@@ -181,10 +187,32 @@ bool Tracker::initialise()
         return false;
     }
 
-    m_trajectory.clear();
+    if (0 == m_frameWidth || 0 == m_frameHeight)
+    {
+        qDebug() << "Failed to init Condensation algorithm, the frame size is not initialized";
+        return false;
+    }
 
+    m_trajectory.clear();
     m_initialized = true;
+
     return true;
+}
+
+QPointF Tracker::generateRandomPosition()
+{
+    // 2D uniform distribution
+    double val_x = rand() % m_frameWidth;
+    double val_y = rand() % m_frameHeight;
+    return QPointF(val_x, val_y);
+}
+
+bool Tracker::insideFrame(QPointF sample)
+{
+    if (sample.x() >= 0 && sample.x() <= m_frameWidth && sample.y() >=0 && sample.y() <= m_frameHeight)
+        return true;
+    else
+        return false;
 }
 
 /* Create all the arrays, then fill in the prior distribution for the
@@ -241,7 +269,7 @@ void Tracker::condensation_init_defaults(void)
     global.process.sigma = ProcessSigma;
 
     /* Set up the parameters of the observation model */
-    global.obs.sigma = ObsSigma;
+    global.obs.sigma = m_frameWidth / 2;
 }
 
 /* Set up the initial sample-set according to the prior model. The
@@ -254,9 +282,8 @@ void Tracker::condensation_set_up_prior_conditions()
 
     for (n = 0; n < global.nsamples; ++n)
     {
-        double val_x = global.prior.sigma * gaussian_random();
-        double val_y = global.prior.sigma * gaussian_random();
-        data.old_positions[n] = QPointF(m_initX, m_initY) + QPointF(val_x, val_y);
+        // 2D uniform distribution
+        data.old_positions[n] = generateRandomPosition();
 
         /* The probabilities are not normalised. */
         data.cumul_prob_array[n] = (double) n;
@@ -281,14 +308,9 @@ void Tracker::condensation_set_up_prior_conditions()
    true positions corrupted by Gaussian measurement noise.
    Accordingly, this routine calculates the new simulated true and
    measured position of the object. */
-void Tracker::condensation_obtain_observations()
+void Tracker::condensation_obtain_observations(QList<QPointF> obs)
 {
-    //    qDebug() << "Tracker::condensation_obtain_observations -->";
-    //    data.meas.truePos = iterate_first_order_arp(data.meas.truePos, global.scene.process);
-    //    double val_x = global.scene.sigma * gaussian_random();
-    //    double val_y = global.scene.sigma * gaussian_random();
-    //    data.meas.observed = data.meas.truePos + QPointF(val_x, val_y);
-    //    qDebug() << "<-- Tracker::condensation_obtain_observations";
+    data.meas.observed = obs;
 }
 
 /* This routine computes all of the new (unweighted) sample
@@ -335,7 +357,15 @@ int Tracker::condensation_pick_base_sample()
    model used here, but any model could be substituted. */
 void Tracker::condensation_predict_sample_position(int new_sample, int old_sample)
 {
-    data.new_positions[new_sample] = iterate_first_order_arp(data.old_positions[old_sample], global.process);
+    QPointF newPos;
+
+    QPointF pos = iterate_first_order_arp(data.old_positions[old_sample], global.process);
+    if (insideFrame(pos))
+        newPos = pos;
+    else
+        newPos = generateRandomPosition();
+
+    data.new_positions[new_sample] = newPos;
 }
 
 /* Once all the unweighted sample positions have been computed using
@@ -348,39 +378,17 @@ void Tracker::condensation_predict_sample_position(int new_sample, int old_sampl
    observation model required. */
 void Tracker::condensation_calculate_base_weights()
 {
-//    struct timeval timstr;      /* structure to hold elapsed time */
-//    struct rusage ru;           /* structure to hold CPU time--system and user */
-//    double tic, toc;             /* floating point numbers to calculate elapsed wallclock time */
-//    double usrtim;              /* floating point number to record elapsed user CPU time */
-//    double systim;              /* floating point number to record elapsed system CPU time */
-
-//    gettimeofday(&timstr,NULL);
-//    tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
-
     double cumul_total = 0.0;
 
-//#pragma omp parallel for
+    //#pragma omp parallel for
     for (int n = 0; n < global.nsamples; ++n)
     {
+        // TODO: log-likilihood
         data.sample_weights[n] = condensation_evaluate_observation_density(data.new_positions[n]);
         data.cumul_prob_array[n] = cumul_total;
         cumul_total += data.sample_weights[n];
     }
     data.largest_cumulative_prob = cumul_total;
-
-//    gettimeofday(&timstr,NULL);
-//    toc = timstr.tv_sec+(timstr.tv_usec/1000000.0);
-//    getrusage(RUSAGE_SELF, &ru);
-//    timstr = ru.ru_utime;
-//    usrtim = timstr.tv_sec+(timstr.tv_usec/1000000.0);
-//    timstr = ru.ru_stime;
-//    systim = timstr.tv_sec+(timstr.tv_usec/1000000.0);
-
-//    qDebug() << "";
-//    qDebug() << "Elapsed time: " << toc-tic << "(s)";
-//    qDebug() << "Elapsed user CPU time: " << usrtim << "(s)";
-//    qDebug() << "Elapsed system CPU time: " << systim << "(s)";
-//    qDebug() << "";
 }
 
 /* Go and output the estimate for this iteration (which is a
@@ -404,7 +412,7 @@ void Tracker::condensation_update_after_iterating()
         data.old_positions = temp;
     } else {
         m_isLost = true;
-        condensation_shut_down();
+        //        condensation_shut_down();
     }
 }
 
@@ -421,31 +429,16 @@ void Tracker::condensation_update_after_iterating()
    found in utility.c */
 double Tracker::condensation_evaluate_observation_density(QPointF samplePoint)
 {
-    cv::Mat roiFrame;
-    int tl_x = qMax((int)(samplePoint.x() - m_initWidth/2), 0);
-    int tl_y = qMax((int)(samplePoint.y() - m_initHeight/2), 0);
-    //    qDebug() << "roi: " << QPoint(tl_x, tl_y);
-
-    int width = qMin(m_initWidth + 100, m_currentFrame.cols - tl_x);
-    int height = qMin(m_initHeight + 100, m_currentFrame.rows - tl_y);
-
-    cv::Rect roi = cv::Rect(tl_x, tl_y, width, height); // ROI rect in m_currentFrame
-
-    m_currentFrame(roi).copyTo(roiFrame);
-
-//    cv::namedWindow("ss",1);
-//    cv::imshow("ss", roiFrame);
-
-    QList< QVector<QPointF> > rects = m_vjClassifier.detectPenguins(roiFrame);
-    if (rects.size() > 0)
+    double distance = 0.0f;
+    foreach (QPointF obsPoint, data.meas.observed)
     {
-        return 1;
+        distance += sqrt(pow(samplePoint.x() - obsPoint.x(), 2) + pow(samplePoint.y() - obsPoint.y(), 2));
     }
 
-    return 0;
+    // normalize distance
+    distance /= data.meas.observed.size();
 
-    //    double distance = sqrt(pow(samplePoint.x() - data.meas.observed.x(), 2) + pow(samplePoint.y() - data.meas.observed.y(), 2));
-    //    return evaluate_gaussian(distance, global.obs.sigma);
+    return evaluate_gaussian(distance, global.obs.sigma);
 }
 
 /* This routine computes the estimated position of the object by
@@ -469,8 +462,8 @@ QPointF Tracker::condensation_cal_estimated_pos()
 
     aggregate /= data.largest_cumulative_prob;
 
-//    qDebug() << "Something good happened";
-//    qDebug() << "Est: " << aggregate;
+    //    qDebug() << "Something good happened";
+    //    qDebug() << "Est: " << aggregate;
 
     return aggregate;
 }

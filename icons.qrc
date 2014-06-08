@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/icons/analysis_haarlike.png</file>
+        <file>qml/icons/analysis_lbp.png</file>
+        <file>qml/icons/analysis_panel_btn.png</file>
+        <file>qml/icons/analysis_pixels.png</file>
+        <file>qml/icons/APCS_Logo.png</file>
+        <file>qml/icons/color_classifier_switch.png</file>
+        <file>qml/icons/demoBtnLeft.png</file>
+        <file>qml/icons/demoBtnRight.png</file>
+        <file>qml/icons/icons.qrc</file>
+        <file>qml/icons/left_round.png</file>
+        <file>qml/icons/module_surveillance.png</file>
+        <file>qml/icons/module_training.png</file>
+        <file>qml/icons/panel_style_1.png</file>
+        <file>qml/icons/randomForest.png</file>
+        <file>qml/icons/right_round.png</file>
+        <file>qml/icons/titleBar_1.png</file>
+        <file>qml/icons/playBtn.png</file>
+        <file>qml/icons/stopBtn.png</file>
+    </qresource>
+</RCC>

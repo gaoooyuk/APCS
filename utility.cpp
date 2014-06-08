@@ -8,7 +8,7 @@ Utility::Utility(QObject *parent) :
 {
 }
 
-QImage Utility::cvMatToQImage(const cv::Mat &inMat)
+QImage Utility::cvMatToQImage(const cv::Mat inMat)
 {
     switch (inMat.type())
     {
@@ -49,7 +49,7 @@ QImage Utility::cvMatToQImage(const cv::Mat &inMat)
     return QImage();
 }
 
-cv::Mat Utility::QImageToCvMat(const QImage &inImage, bool inCloneImageData = true)
+cv::Mat Utility::QImageToCvMat(const QImage inImage, bool inCloneImageData)
 {
     switch (inImage.format())
     {
@@ -85,4 +85,12 @@ cv::Mat Utility::QImageToCvMat(const QImage &inImage, bool inCloneImageData = tr
     }
 
     return cv::Mat();
+}
+
+QFileInfoList Utility::getFileInfoList(QString &dirPath)
+{
+    QDir dir(dirPath);
+    QStringList filters;
+    filters << "*.jpg" << "*.png" << "*.jpeg";
+    return dir.entryInfoList(filters, QDir::Files);
 }

@@ -2,19 +2,29 @@
 #include <QColor>
 #include <QHash>
 #include <QImageReader>
+#include <QElapsedTimer>
+
+#include "trainingsystem.h"
+
+#define CV_WINDOW_NAME "penguinVideoWindow"
 
 cv::VideoCapture cap;
+
 
 PenguinViewer::PenguinViewer(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
     m_imagePath = "";
     m_applyColorFilter = false;
-    m_randomForest.train("penguin_color.train", 100, 144);
+
+//    m_randomForest.train("penguin_color.train", 100, 144);
 
     cap.open("penguin.wmv");
     if(!cap.isOpened())  // check if we succeeded
         qDebug() << "Camera failed.";
+
+    cv::namedWindow(CV_WINDOW_NAME, 1);
+    cv::resizeWindow(CV_WINDOW_NAME, 0, 0);
 
     m_frameCount = 0;
     m_currentFPS = 0.0f;
@@ -22,6 +32,14 @@ PenguinViewer::PenguinViewer(QQuickItem *parent)
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateFPS()));
 
     m_trackers.clear();
+
+    m_surveillanceStatus = PenguinViewer::Idel;
+}
+
+PenguinViewer::~PenguinViewer()
+{
+    // TODO: this deconstructor doesn't call
+    cv::destroyWindow(CV_WINDOW_NAME);
 }
 
 QString PenguinViewer::imagePath()
@@ -44,13 +62,31 @@ void PenguinViewer::setImage(QString imagePath)
 
 void PenguinViewer::start()
 {
-    m_trackers.clear();
-    cv::namedWindow("edges", 1);
+    m_surveillanceStatus = PenguinViewer::Running;
+    emit statusChanged();
 
-    for(;;)
+    m_vjClassifier.setParams(1.1, 6, QSize(40, 120));
+
+    m_trackers.clear();
+
+    QStringList imgs = TrainingSystem::getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal");
+
+    qDebug() << "Num of imgs: " << imgs.length();
+    int num_detected = 0;
+
+//    for (int num = 0; num < imgs.length(); num++)
+    while (1)
     {
+//        cv::Mat frame = cv::imread(imgs.at(num).toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+//        if (!frame.data)
+//        {
+//            qDebug() <<  "Could not open or find the image.";
+//        }
+
         cv::Mat frame;
-        cap >> frame; // get a new frame from camera or video
+        bool ret = cap.read(frame);    // get a new frame from camera or video
+        if (!ret)
+            break;
 
         frame.convertTo(frame, CV_8UC1);
         m_image = Utility::cvMatToQImage(frame);
@@ -58,11 +94,24 @@ void PenguinViewer::start()
         setWidth(m_image.width());
         setHeight(m_image.height());
 
-        if (m_trackers.isEmpty())
+        QElapsedTimer timer;
+        timer.start();
+
+        QList< QVector<QPointF> > detections = detectPenguins(frame);
+
+//        qDebug() << "(detectPenguins)Elapsed time: " << timer.elapsed() << "milliseconds";
+
+        m_colorRects.clear();
+        m_colorRects.insert("Q_COLOR_FRONTAL", detections);
+
+        if (!detections.isEmpty())
         {
-            QList< QVector<QPointF> > rects = detectPenguins(frame);
-            foreach(QVector<QPointF> rect, rects)
+            num_detected += detections.length();
+            QList<QPointF> detectionCentroids;
+
+            for (int i = 0; i < detections.size(); i++)
             {
+                QVector<QPointF> rect = detections.at(i);
                 // calculate the penguin centre
                 double cx = 0.0f;
                 double cy = 0.0f;
@@ -74,24 +123,28 @@ void PenguinViewer::start()
 
                 cx = cx / rect.size();
                 cy = cy / rect.size();
+                // qDebug() << "Penguin centre: (" << cx << "," << cy << ")";
+                detectionCentroids.append(QPointF(cx, cy));
 
-//                qDebug() << "Penguin centre: (" << cx << "," << cy << ")";
-
-                int width = abs(rect.at(0).x() - rect.at(2).x());
-                int height = abs(rect.at(1).y() - rect.at(3).y());
-
-                Tracker *tracker = new Tracker;
-                tracker->setInitialState(cx, cy, width, height);
-                m_trackers.append(tracker);
+//                int p_width = abs(rect.at(0).x() - rect.at(2).x());
+//                int p_height = abs(rect.at(1).y() - rect.at(3).y());
             }
 
-            m_colorRects.insert("Q_COLOR_FRONTAL", rects);
-        } else {
-            Tracker *tracker = m_trackers.last();
-            tracker->propagate(frame);
-            if (tracker->isLost())
+            if (m_trackers.isEmpty())
             {
-                m_trackers.removeLast();
+                Tracker *tracker = new Tracker;
+                tracker->setFrameSize(width(), height());
+//                tracker->setInitialState(cx, cy, p_width, p_height);
+                m_trackers.append(tracker);
+
+            } else {
+                Tracker *tracker = m_trackers.first();
+                tracker->propagate(detectionCentroids);
+
+                //            if (tracker->isLost())
+                //            {
+                //                m_trackers.removeLast();
+                //            }
             }
         }
 
@@ -100,6 +153,10 @@ void PenguinViewer::start()
         if(cv::waitKey(10) >= 0)
             break;
     }
+
+    m_surveillanceStatus = PenguinViewer::Idel;
+    emit statusChanged();
+    qDebug() << "Num of detection: " << num_detected;
 }
 
 void PenguinViewer::updateFPS()
@@ -171,11 +228,11 @@ void PenguinViewer::paint(QPainter *painter)
         painter->restore();
     }
 
-//    foreach (Tracking* tracker, m_trackers)
+    //    foreach (Tracking* tracker, m_trackers)
     if (!m_trackers.isEmpty())
     {
-        Tracker *tracker = m_trackers.last();
-        if (!tracker->isLost())
+        Tracker *tracker = m_trackers.first();
+        if (1)
         {
             QList<QPointF> trackingCandidates = tracker->getCandidates();
             painter->save();
@@ -192,13 +249,13 @@ void PenguinViewer::paint(QPainter *painter)
             painter->setBrush(Qt::yellow);
             painter->setOpacity(0.2);
             QList<QPointF> trajectoryPoints = tracker->getTrajectory();
-//            QList<QRect> trajectoryRects = tracker->getTrajectoryRects();
-            qDebug() << "trajectory: " << trajectoryPoints;
+            //            QList<QRect> trajectoryRects = tracker->getTrajectoryRects();
+//            qDebug() << "trajectory: " << trajectoryPoints;
             for (int i = 0; i < trajectoryPoints.size(); i++)
             {
-//                painter->drawRect(trajectoryRects.at(i));
+                //                painter->drawRect(trajectoryRects.at(i));
                 painter->drawEllipse(trajectoryPoints.at(i), 20, 20);
-//                painter->drawRect(tracker->getTrackedRectangle());
+                //                painter->drawRect(tracker->getTrackedRectangle());
             }
             painter->restore();
         }
@@ -219,6 +276,11 @@ QList< QVector<QPointF> > PenguinViewer::detectPenguins(cv::Mat videoFrame)
 QString PenguinViewer::currentFPS()
 {
     return QString::number(m_currentFPS);
+}
+
+PenguinViewer::SurveillanceStatus PenguinViewer::status() const
+{
+    return m_surveillanceStatus;
 }
 
 bool PenguinViewer::applyColorFilter()

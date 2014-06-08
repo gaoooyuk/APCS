@@ -1,105 +1,138 @@
-import QtQuick 2.0
+import QtQuick 2.2
+import QtGraphicalEffects 1.0
+
 import Cascade 1.0
 import Analysis 1.0
 import Core 1.0
 
 Rectangle {
     id: analysisPanelImp
-    width: mainWindow.width
-    height: mainWindow.height
-    visible: false
+    color: "black"
+
+    property string analysisImagePath: ""
+
+    Component {
+        id: highlight
+        Rectangle {
+            width: 80; height: 240
+            color: "lightsteelblue"; radius: 5
+            y: analysisToolListView.currentItem.y
+        }
+    }
+
+    ListView {
+        id: analysisToolListView
+        anchors.fill: parent
+        clip: true
+        orientation: ListView.Horizontal
+        focus: true
+        spacing: 10
+
+        model: analysisToolModel
+        delegate: Item {
+            width: 80
+            height: 240
+
+            FeatureItem {
+                id: featureImg
+                width: 80
+                height: 240
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                smooth: true
+                imagePath: analysisImagePath
+                featureExtractorType: t_type
+            }
+
+            Glow {
+                id: glow
+                anchors.fill: featureImg
+                visible: index == analysisToolListView.currentIndex
+                radius: 12
+                samples: 24
+                spread: 0.8
+                transparentBorder: true
+                color: "lightsteelblue"
+                source: featureImg
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    analysisToolListView.currentIndex = index
+                }
+            }
+
+//            Text {
+//                id: toolName
+//                width: paintedWidth
+//                height: paintedHeight
+//                anchors.top: toolImage.bottom
+//                anchors.horizontalCenter: parent.horizontalCenter
+//                text: t_name
+//            }
+        }
+    }
+
+    ListModel {
+        id: analysisToolModel
+        ListElement {
+            t_name: "Haar-Like"
+            t_type: FeatureItem.HaarLike
+        }
+        ListElement {
+            t_name: "LBP"
+            t_type: FeatureItem.LBP
+        }
+        ListElement {
+            t_name: "CensusFeature"
+            t_type: FeatureItem.CensusFeature
+        }
+        ListElement {
+            t_name: "ColorBins"
+            t_type: FeatureItem.ColorBins
+        }
+        ListElement {
+            t_name: "Laplacian"
+            t_type: FeatureItem.Laplacian
+        }
+    }
 
     // slidingWindowImg
-    Image {
-        id: slidingWindowImg
-        width: 200;
-        height: 600;
-        anchors.top: parent.top
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 40
-        source: "/Users/apple/Desktop/Courses/Penguin/prototype/training/training/positives/frontal/ratio_1_3/pos-003.jpg"
-    }
+//    Image {
+//        id: slidingWindowImg
+//        width: 200;
+//        height: 600;
+//        anchors.top: parent.top
+//        anchors.topMargin: 20
+//        anchors.left: parent.left
+//        anchors.leftMargin: 40
+//        source: "/Users/apple/Desktop/Courses/Penguin/prototype/training/training/positives/frontal/ratio_1_3/pos-003.jpg"
+//    }
 
-    Rectangle {
-        id: analysisToolSelector
-        width: 800
-        anchors.left: slidingWindowImg.right
-        anchors.leftMargin: 20
-        anchors.top: slidingWindowImg.top
-        anchors.topMargin: 2
-        anchors.bottom: slidingWindowImg.bottom
-        anchors.bottomMargin: 2
-        border.color: "darkGray"
-        border.width: 2
+//    Rectangle {
+//        id: analysisToolSelector
+//        width: 800
+//        anchors.left: slidingWindowImg.right
+//        anchors.leftMargin: 20
+//        anchors.top: slidingWindowImg.top
+//        anchors.topMargin: 2
+//        anchors.bottom: slidingWindowImg.bottom
+//        anchors.bottomMargin: 2
+//        border.color: "darkGray"
+//        border.width: 2
 
-        ListView {
-            id: analysisToolListView
-            anchors.fill: parent
-            clip: true
-            orientation: ListView.Horizontal
-            model: analysisToolModel
-            delegate: Item {
-                width: analysisToolSelector.width/3
-                height: analysisToolSelector.height
 
-                property int margin: 10
+//    }
 
-                Image {
-                    id: toolImage
-                    width: 180
-                    height: 540
-                    anchors.top: parent.top
-                    anchors.topMargin: margin
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    smooth: true
-                    source: t_image
-                }
-
-                Text {
-                    id: toolName
-                    width: paintedWidth
-                    height: paintedHeight
-                    anchors.top: toolImage.bottom
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: t_name
-                }
-            }
-        }
-
-        ListModel {
-            id: analysisToolModel
-            ListElement {
-                t_name: "Haar-Like"
-                t_image: "qrc:///analysis_haarlike.png"
-            }
-            ListElement {
-                t_name: "LBP"
-                t_image: "qrc:///analysis_lbp.png"
-            }
-            ListElement {
-                t_name: "Pixels(Bins)"
-                t_image: "qrc:///analysis_pixels.png"
-            }
-            ListElement {
-                t_name: "Edge(Gradient)"
-                t_image: ""
-            }
-            ListElement {
-                t_name: "HSV"
-                t_image: ""
-            }
-        }
-    }
-
-    Rectangle {
-        id: spacerLine
-        width: parent.width
-        height: 2
-        color: "gray"
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 160
-    }
+//    Rectangle {
+//        id: spacerLine
+//        width: parent.width
+//        height: 2
+//        color: "gray"
+//        anchors.bottom: parent.bottom
+//        anchors.bottomMargin: 160
+//    }
 
 //    Timer {
 //        id: timer
@@ -107,33 +140,16 @@ Rectangle {
 //        onTriggered: haarItem.showNextFeature();
 //    }
 
-    HaarFeatureItem {
-        id: haarItem
-        objectName: "haarItem"
-        anchors.top: parent.top
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.leftMargin: 40
-        width: 200;
-        height: 600;
-        visible: false
-    }
-
-//    ColorMapItem {
-//        id: colorMapItem
-//        objectName: "colorMapItem"
+//    HaarFeatureItem {
+//        id: haarItem
+//        objectName: "haarItem"
 //        anchors.top: parent.top
 //        anchors.topMargin: 20
-//        anchors.right: parent.right
-//        anchors.rightMargin: 40
-//        width: 800;
+//        anchors.left: parent.left
+//        anchors.leftMargin: 40
+//        width: 200;
 //        height: 600;
-//    }
-
-//    LbpItem {
-//        width: 200
-//        height: 600
-//        anchors.centerIn: parent
+//        visible: false
 //    }
 
 //    Rectangle {
@@ -209,5 +225,16 @@ Rectangle {
 //                }
 //            }
 //        }
+//    }
+
+//    ColorMapItem {
+//        id: colorMapItem
+//        objectName: "colorMapItem"
+//        anchors.top: parent.top
+//        anchors.topMargin: 20
+//        anchors.right: parent.right
+//        anchors.rightMargin: 40
+//        width: 800;
+//        height: 600;
 //    }
 }

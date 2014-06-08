@@ -1,5 +1,5 @@
 #include "violajonesclassifier.h"
-//#include "utility.h"
+#include <QElapsedTimer>
 
 #include <QDebug>
 
@@ -7,18 +7,34 @@ ViolaJonesClassifier::ViolaJonesClassifier(QObject *parent) :
     QObject(parent)
 {
     // 1. Add cascade descriptors
-//    m_cascade_xmls.push_back(penguin_cascade_frontal);
+    //    m_cascade_xmls.push_back(penguin_cascade_frontal);
     //    m_cascade_xmls.push_back(penguin_cascade_90);
     //    m_cascade_xmls.push_back(penguin_cascade_90_upper);
     //    m_cascade_xmls.push_back(penguin_cascade_90_lower);
-        m_cascade_xmls.push_back(penguin_cascade_45);
+//    m_cascade_xmls.push_back(penguin_cascade_45);
+    m_cascade_xmls.push_back(penguin_cascade);
+
+    // Default parameters
+    m_scaleFactor = 1.05;
+    m_minNeighbours = 3;
+    m_minSize = QSize(20, 60);
+}
+
+void ViolaJonesClassifier::setParams(double scaleFactor, int minNeighbours, QSize minSize)
+{
+    m_scaleFactor = scaleFactor;
+    m_minNeighbours = minNeighbours;
+    m_minSize = minSize;
 }
 
 QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFrame)
 {
+    QElapsedTimer elapsedTimer;
+    elapsedTimer.start();
+
     QList< QVector<QPointF> > penguinRects;
 
-//    m_colorRects.clear();
+    //    m_colorRects.clear();
 
     cv::Mat inputImage = videoFrame; // cv::imread(m_imagePath.toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
     if (!inputImage.data)
@@ -29,8 +45,8 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
 
     int flips = 1;
     // int rorations[5] = {0, -30, -60, 30, 60};
-//        int rorations[5] = {0, -15, -30, 15, 30};
-//    int rorations[3] = {0, -15, 15};
+    //        int rorations[5] = {0, -15, -30, 15, 30};
+    //    int rorations[3] = {0, -15, 15};
     int rorations[1] = {0};
     int flipCode = 1; // flipping around y-axis
 
@@ -52,6 +68,8 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
         for (size_t j = 0; j < sizeof(rorations) / sizeof(int); j++)
         {
             int rotation = rorations[j];
+
+            // TODO: cv::parallel_for_
             for (std::vector<std::string>::iterator it = m_cascade_xmls.begin(); it != m_cascade_xmls.end(); ++it)
             {
                 std::string cascade_xml = *it;
@@ -111,17 +129,19 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
                     new_rects.append(rect_points);
                 }
 
-//                if (m_colorRects.contains(rectColor))
-//                {
-//                    QList< QVector<QPointF> > old_rects = m_colorRects.take(rectColor);
-//                    new_rects.append(old_rects);
-//                }
-//                m_colorRects.insert(rectColor, new_rects);
+                //                if (m_colorRects.contains(rectColor))
+                //                {
+                //                    QList< QVector<QPointF> > old_rects = m_colorRects.take(rectColor);
+                //                    new_rects.append(old_rects);
+                //                }
+                //                m_colorRects.insert(rectColor, new_rects);
 
                 penguinRects.append(new_rects);
             }
         }
     }
+
+    qDebug() << "Penguin detection elapsed time: " << elapsedTimer.elapsed();
 
     return penguinRects;
 }
@@ -129,7 +149,38 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
 std::vector<cv::Rect> ViolaJonesClassifier::detect(cv::Mat frame)
 {
     std::vector<cv::Rect> rects;    // rects detected by cascade classifier
-    m_classifier.detectMultiScale(frame, rects, 1.05, 3, 0|CV_HAAR_SCALE_IMAGE, cv::Size(20,60));
+    std::vector<int> rejectLevels;
+    std::vector<double> confidences;
+    m_classifier.detectMultiScale(frame,
+                                  rects,
+                                  rejectLevels,
+                                  confidences,
+                                  m_scaleFactor,
+                                  m_minNeighbours,
+                                  0|CV_HAAR_SCALE_IMAGE,
+                                  cv::Size(m_minSize.width(), m_minSize.height()),
+                                  cv::Size(frame.cols, frame.rows),
+                                  false);
+
+//    QList<int> areas;
+//    for (size_t i = 0; i < rects.size(); i++)
+//    {
+//        cv::Rect rect = rects[i];
+//        areas.append(rect.area());
+//    }
+
+//    QList<double> qConfidences;
+//    for (size_t j = 0; j < confidences.size(); j++)
+//    {
+//        qConfidences.append(confidences[j]);
+//    }
+
+////    if (!qConfidences.isEmpty())
+//    {
+//        qDebug() << "confidences:" << areas;
+//        qDebug() << "confidences:" << qConfidences;
+//    }
+
     return rects;
 }
 

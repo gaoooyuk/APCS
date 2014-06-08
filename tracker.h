@@ -4,12 +4,7 @@
 #include <QObject>
 #include <QPoint>
 #include <QList>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/objdetect/objdetect.hpp>
-
-#include "violajonesclassifier.h"
-#include "randomforest.h"
+#include <QRect>
 
 class Tracker : public QObject
 {
@@ -22,8 +17,9 @@ public:
     };
 
 public:
+    void setFrameSize(int width, int height);
     void setInitialState(double x, double y, int width, int height);
-    void propagate(cv::Mat frame);
+    void propagate(QList<QPointF> obs);
     QList<QPointF> getCandidates();
     bool isLost();
     QPointF getTrackedPos();
@@ -33,12 +29,14 @@ public:
 
 private:
     bool initialise();
+    QPointF generateRandomPosition();
+    bool insideFrame(QPointF sample);
 
     // Condensation Algorithm
     bool condensation_init();
     void condensation_init_defaults();
     void condensation_set_up_prior_conditions();
-    void condensation_obtain_observations();
+    void condensation_obtain_observations(QList<QPointF> obs);
     void condensation_predict_new_bases();
     int condensation_pick_base_sample();
     void condensation_predict_sample_position(int new_sample, int old_sample);
@@ -50,17 +48,17 @@ private:
 
 private:
     bool m_initialized;
+
+    int m_frameWidth;
+    int m_frameHeight;
+
     double m_initX;    // start x position
     double m_initY;    // start y position
     int m_initWidth;
     int m_initHeight;
 
-    cv::Mat m_currentFrame;
     QList<QPointF> m_trajectory;
     bool m_isLost;
-
-    ViolaJonesClassifier m_vjClassifier;
-
 };
 
 #endif // TRACKER_H

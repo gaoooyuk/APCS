@@ -86,7 +86,7 @@ ColorMapItem& ColorMapItem::operator =(const ColorMapItem &other)
 
 void ColorMapItem::paint(QPainter *painter)
 {
-    painter->setOpacity(0.5);
+    painter->setOpacity(1);
     painter->setRenderHints(QPainter::Antialiasing, true);
 
     QHash<int, int> red_bins;

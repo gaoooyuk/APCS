@@ -1,4 +1,4 @@
-QT += core qml quick
+QT += core qml quick widgets
 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 # Add more folders to ship with the application, here
 folder_01.source = qml/APCS
@@ -25,7 +25,15 @@ SOURCES += main.cpp \
     lbpitem.cpp \
     utility.cpp \
     violajonesclassifier.cpp \
-    tracker.cpp
+    tracker.cpp \
+    hog/laplacian.cpp \
+    featureitem.cpp \
+    lbpfeatureextractor.cpp \
+    colorfeatureextractor.cpp \
+    featureextractor.cpp \
+    censusfeatureextractor.cpp \
+    edgefeatureextractor.cpp \
+    trainingsystem.cpp
 
 # Installation path
 # target.path =
@@ -54,10 +62,18 @@ HEADERS += \
     condensation/model_parameters.h \
     violajonesclassifier.h \
     violajonesdefs.h \
-    tracker.h
+    tracker.h \
+    hog/laplacian.h \
+    featureitem.h \
+    lbpfeatureextractor.h \
+    colorfeatureextractor.h \
+    featureextractor.h \
+    censusfeatureextractor.h \
+    edgefeatureextractor.h \
+    trainingsystem.h
 
 INCLUDEPATH += /usr/local/include/
-LIBS += -L/opt/local/lib \
+LIBS += -L/usr/local/lib \
     -lopencv_core \
     -lopencv_imgproc \
     -lopencv_features2d \
@@ -66,9 +82,5 @@ LIBS += -L/opt/local/lib \
     -lopencv_ml \
     -lm
 
-QMAKE_CXXFLAGS += -openmp
-QMAKE_LFLAGS += -openmp
-#LIBS += -fopenmp
-
 RESOURCES += \
-    qml/icons/icons.qrc
+    icons.qrc

@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QImage>
+#include <QDir>
+
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgproc/types_c.h>
 
@@ -12,8 +14,10 @@ class Utility : public QObject
 public:
     explicit Utility(QObject *parent = 0);
 
-    static QImage cvMatToQImage(const cv::Mat &inMat);
-    static cv::Mat QImageToCvMat(const QImage &inImage, bool inCloneImageData);
+    static QImage cvMatToQImage(const cv::Mat inMat);
+    static cv::Mat QImageToCvMat(const QImage inImage, bool inCloneImageData = true);
+
+    static QFileInfoList getFileInfoList(QString &dirPath);
 };
 
 #endif // UTILITY_H
