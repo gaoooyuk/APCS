@@ -18,5 +18,6 @@
         <file>qml/icons/titleBar_1.png</file>
         <file>qml/icons/playBtn.png</file>
         <file>qml/icons/stopBtn.png</file>
+        <file>qml/icons/color_classifier_switch_off.png</file>
     </qresource>
 </RCC>

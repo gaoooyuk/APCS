@@ -53,6 +53,8 @@ double evaluate_gaussian(double val, double sigma)
     /* This private definition is used for portability */
     static const double Condense_PI = 3.14159265358979323846;
 
+    return exp(-0.5 * (val*val / (sigma*sigma)));
+
     return 1.0/(sqrt(2.0*Condense_PI) * sigma) *
             exp(-0.5 * (val*val / (sigma*sigma)));
 }
@@ -67,8 +69,9 @@ QPointF iterate_first_order_arp(QPointF previous, ProcessModel process)
 {
     double val_x = process.sigma * gaussian_random();
     double val_y = process.sigma * gaussian_random();
-    return QPointF(process.mean, process.mean) +
-            ((previous - QPointF(process.mean, process.mean)) * process.scaling) + QPointF(val_x, val_y);
+    return QPointF(process.mean, process.mean)
+            + (previous - QPointF(process.mean, process.mean)) * process.scaling
+            + QPointF(val_x, val_y);
 }
 
 /* All of the global information is packaged into the following two
@@ -127,7 +130,7 @@ QList<QPointF> Tracker::getCandidates()
     QList<QPointF> candidates;
     for (int i = 0; i < global.nsamples; i++)
     {
-        candidates.append(data.old_positions[i]);
+        candidates.append(data.new_positions[i]);
     }
 
     return candidates;
@@ -247,17 +250,9 @@ bool Tracker::condensation_init()
 void Tracker::condensation_init_defaults(void)
 {
     global.nsamples = NSamples;
-    global.niterations = NIterations;
 
     /* The following routines are model-specific and should be replaced to
        implement an arbitrary process and observation model. */
-
-    /* Set up the parameters of the simulation model, process and
-       observation. */
-    global.scene.process.mean = SimulatedMean;
-    global.scene.process.scaling = SimulatedScaling;
-    global.scene.process.sigma = SimulatedSigma;
-    global.scene.sigma = SimulatedMeasSigma;
 
     /* Set up the parameters of the prior distribution */
     global.prior.mean = PriorMean;
@@ -269,7 +264,7 @@ void Tracker::condensation_init_defaults(void)
     global.process.sigma = ProcessSigma;
 
     /* Set up the parameters of the observation model */
-    global.obs.sigma = m_frameWidth / 2;
+    global.obs.sigma = ObsSigma;
 }
 
 /* Set up the initial sample-set according to the prior model. The
@@ -296,9 +291,6 @@ void Tracker::condensation_set_up_prior_conditions()
      multiplicative normalisation constant for the sample_weights
      array, as well. */
     data.largest_cumulative_prob = (double) n;
-
-    /* This is the initial positions of the simulated object. */
-    //    data.meas.truePos = QPointF(m_initX, m_initY);
 }
 
 /* In a real implementation, this routine would go and actually make
@@ -384,7 +376,8 @@ void Tracker::condensation_calculate_base_weights()
     for (int n = 0; n < global.nsamples; ++n)
     {
         // TODO: log-likilihood
-        data.sample_weights[n] = condensation_evaluate_observation_density(data.new_positions[n]);
+        double tmp = condensation_evaluate_observation_density(data.new_positions[n]);
+        data.sample_weights[n] = tmp;
         data.cumul_prob_array[n] = cumul_total;
         cumul_total += data.sample_weights[n];
     }
@@ -429,16 +422,17 @@ void Tracker::condensation_update_after_iterating()
    found in utility.c */
 double Tracker::condensation_evaluate_observation_density(QPointF samplePoint)
 {
-    double distance = 0.0f;
+    double eval = 0.0f;
     foreach (QPointF obsPoint, data.meas.observed)
     {
-        distance += sqrt(pow(samplePoint.x() - obsPoint.x(), 2) + pow(samplePoint.y() - obsPoint.y(), 2));
+        double distance = sqrt(pow(samplePoint.x() - obsPoint.x(), 2) + pow(samplePoint.y() - obsPoint.y(), 2));
+        eval += evaluate_gaussian(distance, global.obs.sigma);
     }
 
-    // normalize distance
-    distance /= data.meas.observed.size();
+    // normalize evaluation
+    eval /= data.meas.observed.size();
 
-    return evaluate_gaussian(distance, global.obs.sigma);
+    return eval;
 }
 
 /* This routine computes the estimated position of the object by

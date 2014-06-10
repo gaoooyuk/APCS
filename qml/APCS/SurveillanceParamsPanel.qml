@@ -12,6 +12,8 @@ Rectangle {
     }
 
     property int parameterLineHeight: 36
+    property real selectedScaleFactor: 1.01
+    property int selectedMinNeighbours: 1
 
     Item {
         id: slidingWindowParamsPanel
@@ -39,13 +41,14 @@ Rectangle {
                     ComboBox {
                          model: ListModel {
                              id: scalingFactorModel
+                             ListElement { text: "1.01"; value: 1.01 }
                              ListElement { text: "1.05"; value: 1.05 }
                              ListElement { text: "1.1"; value: 1.1 }
                              ListElement { text: "1.15"; value: 1.15 }
                              ListElement { text: "1.2"; value: 1.2 }
                          }
-                         onAccepted: {
-
+                         onCurrentIndexChanged: {
+                             selectedScaleFactor = scalingFactorModel.get(currentIndex).value;
                          }
                      }
                 }
@@ -80,8 +83,8 @@ Rectangle {
                              ListElement { text: "9"; value: 9 }
                              ListElement { text: "10"; value: 10 }
                          }
-                         onAccepted: {
-
+                         onCurrentIndexChanged: {
+                             selectedMinNeighbours = minNeighboursModel.get(currentIndex).value;
                          }
                      }
                 }
@@ -119,6 +122,36 @@ Rectangle {
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
+            }
+        }
+    }
+
+    Rectangle {
+        id: applyBtn
+        width: 80
+        height: 30
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 10
+        border.width: 1
+        radius: 15
+        color: "transparent"
+        border.color: "white"
+
+        Text {
+            anchors.centerIn: parent
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            color: "white"
+            text: qsTr("Apply")
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                penguinViewer.setVJClassifierParams(selectedScaleFactor, selectedMinNeighbours, 20, 60);
+//                penguinViewer.setVJClassifierParams(selectedScaleFactor, selectedMinNeighbours, 60, 180);
             }
         }
     }

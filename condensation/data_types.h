@@ -74,15 +74,11 @@ typedef struct _GlobalData {
 			   timestep. */
   ProcessModel process; /* The parameters specifying the process
 			   model. */
-  SceneModel scene;     /* The parameters specifying the simulation
-			   model of the scene. This is only used in
-			   the case of simulated data. */
   ObservationModel obs; /* The parameters specifying the observation
 			   model. */
   DisplayModel disp;    /* The parameters specifying how to display
 			   the state estimate at each timestep. */
   int nsamples;         /* The number of samples N. */
-  int niterations;      /* The number of iterations to run the filter. */
 } GlobalData;
 
 /* This structure contains all of the information which is specific to

@@ -1,5 +1,6 @@
 #include "trainingsystem.h"
 #include "utility.h"
+#include "colorfeatureextractor.h"
 
 #include <QProcess>
 
@@ -52,13 +53,17 @@ void TrainingSystem::train(int w,
         }
     }
 
-    QString folderName = QString("classifier_%1x%2").arg(QString::number(w)).arg(QString::number(h));
+    QString folderName = QString("vj_classifier_%1x%2").arg(QString::number(w)).arg(QString::number(h));
     if (overwrite)
     {
-        QStringList positiveSampleList =  getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_12x36");
-        QStringList negativeSampleList =  getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/prototype/training/training/negatives");
+        QString posFolder
+                = QString("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_%1x%2")
+                .arg(QString::number(w))
+                .arg(QString::number(h));
+        QStringList positiveSampleList =  getAllFilesOfDir(posFolder);
+        QStringList negativeSampleList =  getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/negatives");
         generateImageDB("negatives.dat", negativeSampleList);
-        generateMoreSamples(5000, w, h, positiveSampleList);
+        generateMoreSamples(300, w, h, positiveSampleList);
 
         // Create output dir
         QString dirPath = QDir::currentPath() + QDir::separator() + folderName;
@@ -68,13 +73,13 @@ void TrainingSystem::train(int w,
             bool ret = dir.removeRecursively();
             if (!ret)
             {
-                qDebug() << "Can't clean the old dir(classifier)";
+                qDebug() << "Can't clean the old dir(vj_classifier)";
             }
         }
         bool res = dir.mkdir(dirPath);
         if (!res)
         {
-            qDebug() << "Can't create the training dir(classifier)";
+            qDebug() << "Can't create the training dir(vj_classifier)";
             return;
         }
     }
@@ -82,8 +87,8 @@ void TrainingSystem::train(int w,
     QStringList trainingAgms;
     trainingAgms << "-vec" << "samples.vec";
     trainingAgms << "-bg" << "negatives.dat";
-    trainingAgms << "-numPos" << "4000";
-    trainingAgms << "-numNeg" << "5000";
+    trainingAgms << "-numPos" << "200";
+    trainingAgms << "-numNeg" << "23000";
     trainingAgms << "-numStages" << QString::number(numStages);
     trainingAgms << "-data" << folderName;
     trainingAgms << "-mode" << "ALL";
@@ -101,6 +106,74 @@ void TrainingSystem::train(int w,
     //      trainingAgms << "-maxWeakCount" << "";
 
     m_vjProcess->start("./opencv_traincascade", trainingAgms);
+}
+
+void TrainingSystem::trainColorBins(int w, int h)
+{
+    QString folderName = QString("cb_classifier_%1x%2").arg(QString::number(w)).arg(QString::number(h));
+
+    QString posFolder
+            = QString("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal")
+            .arg(QString::number(w))
+            .arg(QString::number(h));
+    QStringList positiveSampleList =  getAllFilesOfDir(posFolder);
+    QStringList negativeSampleList =  getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/negatives_color");
+
+    // Create output dir
+    QString dirPath = QDir::currentPath() + QDir::separator() + folderName;
+    QDir dir(dirPath);
+    if (dir.exists())
+    {
+        bool ret = dir.removeRecursively();
+        if (!ret)
+        {
+            qDebug() << "Can't clean the old dir(cb_classifier)";
+        }
+    }
+    bool res = dir.mkdir(dirPath);
+    if (!res)
+    {
+        qDebug() << "Can't create the training dir(cb_classifier)";
+        return;
+    }
+
+    ColorFeatureExtractor colorFeatureExtractor;
+    QFile fvFile(dirPath + QDir::separator() + QString("cb.classifier"));
+    if (!fvFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+        return;
+
+    // Generate feature vectors
+    for (int i = 0; i < positiveSampleList.length(); i++)
+    {
+        colorFeatureExtractor.compute(positiveSampleList.at(i));
+        QVector<int> fv = colorFeatureExtractor.featureVector();
+        QByteArray data;
+        for (int j = 0; j < fv.length(); j++)
+        {
+            data.append(QString::number(fv.at(j)));
+            data.append(",");
+        }
+        data.append("1\n");   // positive label
+        fvFile.write(data);
+    }
+
+    for (int i = 0; i < negativeSampleList.length(); i++)
+    {
+        colorFeatureExtractor.compute(negativeSampleList.at(i));
+        QVector<int> fv = colorFeatureExtractor.featureVector();
+        QByteArray data;
+        for (int j = 0; j < fv.length(); j++)
+        {
+            data.append(QString::number(fv.at(j)));
+            data.append(",");
+        }
+        data.append("0\n");   // negative label
+        fvFile.write(data);
+    }
+
+    fvFile.close();
+
+    qDebug() << "TrainingSystem::trainColorBins generated";
 }
 
 void TrainingSystem::handleTrainingProcessError()
@@ -124,6 +197,7 @@ void TrainingSystem::handleTrainingProcessFinished(int exitCode)
 
 void TrainingSystem::generateImageDB(QString dbName, QStringList fileList, bool pathOnly)
 {
+    qDebug() << "TrainingSystem::generateImageDB";
     QFile dbFile(dbName);
     if (!dbFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
         return;
@@ -166,6 +240,7 @@ void TrainingSystem::generateMoreSamples(int targetNum,
                                          int targetHeight,
                                          QStringList fileList)
 {
+    qDebug() << "TrainingSystem::generateMoreSamples";
     int num = fileList.length();
     if (0 == num)
     {
@@ -175,6 +250,7 @@ void TrainingSystem::generateMoreSamples(int targetNum,
     if (num >= targetNum)
     {
         qDebug() << "Target number <= Current number";
+        return;
     }
 
     QString program = "./opencv_createsamples";

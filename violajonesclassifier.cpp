@@ -141,7 +141,7 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
         }
     }
 
-    qDebug() << "Penguin detection elapsed time: " << elapsedTimer.elapsed();
+//    qDebug() << "Penguin detection elapsed time: " << elapsedTimer.elapsed();
 
     return penguinRects;
 }
@@ -161,113 +161,8 @@ std::vector<cv::Rect> ViolaJonesClassifier::detect(cv::Mat frame)
                                   cv::Size(m_minSize.width(), m_minSize.height()),
                                   cv::Size(frame.cols, frame.rows),
                                   false);
-
-//    QList<int> areas;
-//    for (size_t i = 0; i < rects.size(); i++)
-//    {
-//        cv::Rect rect = rects[i];
-//        areas.append(rect.area());
-//    }
-
-//    QList<double> qConfidences;
-//    for (size_t j = 0; j < confidences.size(); j++)
-//    {
-//        qConfidences.append(confidences[j]);
-//    }
-
-////    if (!qConfidences.isEmpty())
-//    {
-//        qDebug() << "confidences:" << areas;
-//        qDebug() << "confidences:" << qConfidences;
-//    }
-
     return rects;
 }
-
-//std::vector<cv::Rect> PenguinViewer::detect(cv::Mat frame, int rotation)
-//{
-//    std::vector<cv::Rect> filteredRects;    // rects after apply color classification
-//    std::vector<cv::Rect> rects;    // rects detected by cascade classifier
-//    cv::Mat frame_rotated;
-
-//    cv::equalizeHist(frame, frame);
-//    rotate(frame, rotation, frame_rotated);
-
-//    classifier.detectMultiScale(frame_rotated, rects, 1.05, 3, 0|CV_HAAR_SCALE_IMAGE, cv::Size(20,60));
-//    filteredRects = rects;
-
-//    if (m_applyColorFilter)
-//    {
-//        filteredRects.clear();
-//        for (size_t m = 0; m < rects.size(); m++)
-//        {
-//            cv::Rect rect = rects[m];
-
-//            QImageReader imgReader;
-//            imgReader.setFileName(m_imagePath);
-//            imgReader.setClipRect(QRect(rect.x, rect.y, rect.width, rect.height));
-//            QImage img = imgReader.read();
-
-//            if (!img.isNull())
-//            {
-//                int bin_width = rect.width / 4;
-//                int bin_height = rect.height / 12;
-//                QVector<int> output_r;
-//                QVector<int> output_g;
-//                QVector<int> output_b;
-//                for (int i = 0; i < 48; i++)
-//                {
-//                    int x = (i % 4) * bin_width;
-//                    int y = (i / 4) * bin_height;
-
-//                    int r = 0;
-//                    int g = 0;
-//                    int b = 0;
-//                    for (int j = x; j < x + bin_width; j++)
-//                    {
-//                        for (int k = y; k < y + bin_height; k++)
-//                        {
-//                            QRgb rgb = img.pixel(j, k);
-//                            r += qRed(rgb);
-//                            g += qGreen(rgb);
-//                            b += qBlue(rgb);
-//                        }
-//                    }
-//                    r = r / (bin_width * bin_height);
-//                    g = g / (bin_width * bin_height);
-//                    b = b / (bin_width * bin_height);
-
-//                    output_r.append(r);
-//                    output_g.append(g);
-//                    output_b.append(b);
-//                }
-
-//                QVector<int> output;
-//                output += output_r;
-//                output += output_g;
-//                output += output_b;
-
-//                int numOfFeatures = 144;
-//                cv::Mat sample = cv::Mat(1, numOfFeatures, CV_32FC1);
-//                for (int attribute = 0; attribute < numOfFeatures; attribute++)
-//                {
-//                    if (attribute < numOfFeatures)
-//                    {
-//                        sample.at<float>(attribute) = output.at(attribute);
-//                    }
-//                }
-
-//                int ret = m_randomForest.predict(sample);
-//                if (ret)
-//                {
-//                    filteredRects.push_back(rect);
-//                }
-//            }
-//        }
-//    }
-
-//    return filteredRects;
-//}
 
 void ViolaJonesClassifier::rotate(cv::Mat& src, double angle, cv::Mat& dst)
 {

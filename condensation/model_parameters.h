@@ -4,16 +4,6 @@
 /* How many samples in the distribution? */
 #define NSamples (1000)
 
-/* How many iterations to run the filter? */
-#define NIterations (100)
-
-/* The simulated object follows a model of the same form as the
-   process */
-#define SimulatedMean (-0.1)
-#define SimulatedScaling (1)
-#define SimulatedSigma (1)
-#define SimulatedMeasSigma (0.03)
-
 /* The prior distribution over samples at the first timestep is a
    Gaussian with the following parameters. */
 #define PriorMean (0.0)
@@ -29,8 +19,8 @@
    where w_t is zero-mean unit iid Gaussian noise. */
 #define ProcessMean (0)
 #define ProcessScaling (1)
-#define ProcessSigma (10)
+#define ProcessSigma (20)
 
 /* The observation density is a mixture of Gaussians, where each
    observed object has a different sigma as follows. */
-#define ObsSigma (200)
+#define ObsSigma (10)

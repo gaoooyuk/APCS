@@ -28,7 +28,7 @@ Rectangle {
             AnchorChanges { target: trainingNavigatorPanel; anchors.right: trainingWindowImp.left }
         },
         State {
-            name: "training"
+            name: "detectionTraining"
             AnchorChanges { target: trainingNavigatorPanel; anchors.left: trainingWindowImp.left }
 
             AnchorChanges { target: originalImgPanel; anchors.right: trainingWindowImp.left }
@@ -50,7 +50,7 @@ Rectangle {
         TrainingToolButton {
             id: analysisBtn
             anchors.verticalCenter: parent.verticalCenter
-            anchors.right: parent.horizontalCenter
+            anchors.right: traningBtn.left
             anchors.rightMargin: 20
             buttonText: "Analysis"
 
@@ -62,12 +62,34 @@ Rectangle {
         TrainingToolButton {
             id: traningBtn
             anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.horizontalCenter
-            anchors.leftMargin: 20
-            buttonText: "Traning"
+            anchors.right: parent.horizontalCenter
+            anchors.rightMargin: 10
+            buttonText: "Detecter"
 
             onBtnClicked: {
-                trainingWindowImp.state = "training"
+                trainingWindowImp.state = "detectionTraining"
+            }
+        }
+
+        TrainingToolButton {
+            id: trackingTrainingBtn
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.horizontalCenter
+            anchors.leftMargin: 10
+            buttonText: "Tracker"
+
+            onBtnClicked: {
+            }
+        }
+
+        TrainingToolButton {
+            id: comparisonBtn
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: trackingTrainingBtn.right
+            anchors.leftMargin: 20
+            buttonText: "Compare"
+
+            onBtnClicked: {
             }
         }
     }
@@ -203,7 +225,9 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                trainingSys.train(12, 36, 0.999, 0.5, 10, true)
+//                trainingSys.train(12, 36, 0.999, 0.5, 10, true)
+//                trainingSys.train(8, 24, 0.999, 0.5, 10, true)
+                trainingSys.trainColorBins(8, 24);
             }
         }
     }
@@ -222,23 +246,6 @@ Rectangle {
 //            drag.maximumX: mainWindow.width - indicator.width
 //            drag.minimumY: 0
 //            drag.maximumY: mainWindow.height - indicator.height
-//        }
-//    }
-
-//    Image {
-//        id: colorClassifierBtn
-//        source: "qrc:///color_classifier_switch.png"
-
-//        anchors.top: parent.top
-//        anchors.topMargin: 10
-//        anchors.right: parent.right
-//        anchors.rightMargin: 20
-
-//        MouseArea {
-//            anchors.fill: parent
-//            onClicked: {
-//                penguinViewer.applyColorFilter = !penguinViewer.applyColorFilter;
-//            }
 //        }
 //    }
 

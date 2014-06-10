@@ -17,5 +17,6 @@
         <file>randomForest.png</file>
         <file>playBtn.png</file>
         <file>stopBtn.png</file>
+        <file>color_classifier_switch_off.png</file>
     </qresource>
 </RCC>

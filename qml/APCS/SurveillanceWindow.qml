@@ -25,6 +25,26 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
+        // fpsPanel
+        Rectangle {
+            id: fpsPanel
+            width: 60
+            height: 30
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 10
+            color: "black"
+
+            Text {
+                anchors.centerIn: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                color: "white"
+                text: qsTr("FPS: ") + penguinViewer.currentFPS
+            }
+        }
+
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
@@ -34,6 +54,31 @@ Rectangle {
 
             onExited: {
                 surveillanceArea.isHovered = false;
+            }
+        }
+
+        Ruler {
+            id: sizeRuler
+            x: fpsPanel.x + fpsPanel.width + 10
+            y: fpsPanel.y + fpsPanel.height - sizeRuler.height
+        }
+
+        Image {
+            id: colorClassifierBtn
+            source: penguinViewer.applyColorFilter ?
+                        "qrc:///qml/icons/color_classifier_switch.png"
+                      : "qrc:///qml/icons/color_classifier_switch_off.png"
+
+            anchors.left: parent.left
+            anchors.leftMargin: 20
+            anchors.bottom: fpsPanel.top
+            anchors.bottomMargin: 10
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    penguinViewer.applyColorFilter = !penguinViewer.applyColorFilter;
+                }
             }
         }
 
@@ -73,29 +118,19 @@ Rectangle {
         }
     }
 
-    Rectangle {
-        id: fpsPanel
-        width: 60
-        height: 30
+    DetectedObjectPanel {
+        id: detectedObjPanel
+        width: 400
+        height: 200
         anchors.left: parent.left
-        anchors.leftMargin: 10
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        color: "black"
-
-        Text {
-            anchors.centerIn: parent
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            color: "white"
-            text: qsTr("FPS: ") + penguinViewer.currentFPS
-        }
+        detectedModel: penguinViewer.detectedPenguinImageList
     }
 
     SurveillanceParamsPanel {
         width: 800
         height: 200
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.left: detectedObjPanel.right
         anchors.bottom: parent.bottom
     }
 

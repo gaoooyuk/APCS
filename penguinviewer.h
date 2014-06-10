@@ -14,9 +14,10 @@
 class PenguinViewer : public QQuickPaintedItem
 {
     Q_OBJECT
-    Q_PROPERTY(bool applyColorFilter READ applyColorFilter WRITE setApplyColorFilter)
+    Q_PROPERTY(bool applyColorFilter READ applyColorFilter WRITE setApplyColorFilter NOTIFY applyColorFilterChanged)
     Q_PROPERTY(QString imagePath READ imagePath WRITE setImage)
     Q_PROPERTY(QString currentFPS READ currentFPS NOTIFY fpsChanged)
+    Q_PROPERTY(QStringList detectedPenguinImageList READ detectedPenguinImageList NOTIFY detectedPenguinImageListChanged)
 
     Q_ENUMS(SurveillanceStatus)
     Q_PROPERTY(SurveillanceStatus status READ status NOTIFY statusChanged)
@@ -35,6 +36,7 @@ public:
     void paint(QPainter *painter);
     QList< QVector<QPointF> > detectPenguins(cv::Mat videoFrame);
     QString currentFPS();
+    QStringList detectedPenguinImageList() const;
 
     PenguinViewer::SurveillanceStatus status() const;
 
@@ -48,8 +50,15 @@ public slots:
     void start();
     void updateFPS();
 
+    void setVJClassifierParams(double scaleFactor,
+                               int minNeighbours,
+                               int minWidth,
+                               int minHeight);
+
 signals:
+    void applyColorFilterChanged();
     void fpsChanged();
+    void detectedPenguinImageListChanged();
     void statusChanged();
 
 private:
@@ -61,6 +70,7 @@ private:
     ViolaJonesClassifier m_vjClassifier;
     RandomForest m_randomForest;
     QList<Tracker*> m_trackers;
+    QStringList m_detectedPenguinImageList;
 
     // For performance analysis
     QTimer m_timer;

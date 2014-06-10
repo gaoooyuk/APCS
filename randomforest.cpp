@@ -20,20 +20,22 @@ void RandomForest::train(QString filename, int numOfSamples, int numOfFeatures)
         return;
 
     float priors[] = {1,1};  // weights of each classification for classes
-    CvRTParams params = CvRTParams(25, // max depth
-                                   5, // min sample count
+    CvRTParams params = CvRTParams(50, // max depth
+                                   numOfSamples * 0.01, // min sample count
                                    0, // regression accuracy: N/A here
                                    false, // compute surrogate split, no missing data
-                                   15, // max number of categories (use sub-optimal algorithm for larger numbers)
+                                   2, // max number of categories (use sub-optimal algorithm for larger numbers)
                                    priors, // the array of priors
                                    false,  // calculate variable importance
-                                   4,       // number of variables randomly selected at node and used to find the best split(s).
-                                   100,  // max number of trees in the forest
-                                   0.01f,               // forrest accuracy
+                                   0,       // number of variables randomly selected at node and used to find the best split(s).
+                                   1,  // max number of trees in the forest
+                                   0.001f,               // forrest accuracy
                                    CV_TERMCRIT_ITER |   CV_TERMCRIT_EPS // termination cirteria
                                    );
 
     m_randomForest.train(samples, CV_ROW_SAMPLE, labels, cv::Mat(), cv::Mat(), var_type, cv::Mat(), params);
+
+    test(filename, numOfSamples, numOfFeatures);
 }
 
 int RandomForest::predict(const cv::Mat& sample)

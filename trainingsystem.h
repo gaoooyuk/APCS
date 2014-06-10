@@ -21,6 +21,9 @@ public slots:
                int numStages,
                bool overwrite = true);
 
+    void trainColorBins(int w,
+                        int h);
+
 private slots:
     void handleTrainingProcessError();
     void handleTrainingProcessMsg();

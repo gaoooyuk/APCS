@@ -28,43 +28,9 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         clip: true
 
-        property int spacingLineNum: 30
-        property real lineHorizontalSpacing: (imgArea.width - spacingLineNum) / spacingLineNum
-        property real lineVerticalSpacing: (imgArea.height - spacingLineNum) / spacingLineNum
-
         // gridBg
-        Item {
+        GridBackground {
             id: gridBg
-            width: parent.width
-            height: parent.height
-
-            Row {
-                anchors.fill: parent
-                spacing: imgArea.lineHorizontalSpacing
-                Repeater {
-                    model: imgArea.spacingLineNum
-                    Rectangle {
-                        width: 1;
-                        height: imgArea.height
-                        opacity: 0.8
-                        color: "darkGray"
-                    }
-                }
-            }
-
-            Column {
-                anchors.fill: parent
-                spacing: imgArea.lineVerticalSpacing
-                Repeater {
-                    model: imgArea.spacingLineNum
-                    Rectangle {
-                        width: imgArea.width;
-                        height: 1
-                        opacity: 0.8
-                        color: "darkGray"
-                    }
-                }
-            }
         }
 
         Flickable {

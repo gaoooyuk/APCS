@@ -3,8 +3,10 @@
 #include <QHash>
 #include <QImageReader>
 #include <QElapsedTimer>
+#include <QDateTime>
 
 #include "trainingsystem.h"
+#include "colorfeatureextractor.h"
 
 #define CV_WINDOW_NAME "penguinVideoWindow"
 
@@ -17,9 +19,8 @@ PenguinViewer::PenguinViewer(QQuickItem *parent)
     m_imagePath = "";
     m_applyColorFilter = false;
 
-//    m_randomForest.train("penguin_color.train", 100, 144);
-
-    cap.open("penguin.wmv");
+//    cap.open("./videos/non_penguin/2.mp4");
+    cap.open("./videos/penguin/penguin1.mp4");
     if(!cap.isOpened())  // check if we succeeded
         qDebug() << "Camera failed.";
 
@@ -33,6 +34,7 @@ PenguinViewer::PenguinViewer(QQuickItem *parent)
 
     m_trackers.clear();
 
+    m_vjClassifier.setParams(1.01, 1, QSize(20, 60));
     m_surveillanceStatus = PenguinViewer::Idel;
 }
 
@@ -62,31 +64,40 @@ void PenguinViewer::setImage(QString imagePath)
 
 void PenguinViewer::start()
 {
+    // Load and training random forest classifier
+    m_randomForest.train("cb_classifier_8x24/cb.classifier", 5900, 576);
+
     m_surveillanceStatus = PenguinViewer::Running;
     emit statusChanged();
 
-    m_vjClassifier.setParams(1.1, 6, QSize(40, 120));
-
     m_trackers.clear();
-
-    QStringList imgs = TrainingSystem::getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal");
-
-    qDebug() << "Num of imgs: " << imgs.length();
+    m_detectedPenguinImageList.clear();
     int num_detected = 0;
 
-//    for (int num = 0; num < imgs.length(); num++)
-    while (1)
-    {
-//        cv::Mat frame = cv::imread(imgs.at(num).toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
-//        if (!frame.data)
-//        {
-//            qDebug() <<  "Could not open or find the image.";
-//        }
+    //#define ABC
 
+#ifdef ABC
+    QStringList imgs = TrainingSystem::getAllFilesOfDir("/MyApps/build-APCS-Desktop/APCS.app/Contents/MacOS/test");
+    //        QStringList imgs = TrainingSystem::getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/negatives");
+
+    qDebug() << "Num of imgs: " << imgs.length();
+    for (int num = 0; num < imgs.length(); num++)
+#else
+    while (1)
+#endif
+    {
+#ifdef ABC
+        cv::Mat frame = cv::imread(imgs.at(num).toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+        if (!frame.data)
+        {
+            qDebug() <<  "Could not open or find the image.";
+        }
+#else
         cv::Mat frame;
         bool ret = cap.read(frame);    // get a new frame from camera or video
         if (!ret)
             break;
+#endif
 
         frame.convertTo(frame, CV_8UC1);
         m_image = Utility::cvMatToQImage(frame);
@@ -94,24 +105,21 @@ void PenguinViewer::start()
         setWidth(m_image.width());
         setHeight(m_image.height());
 
-        QElapsedTimer timer;
-        timer.start();
+        m_colorRects.clear();
 
         QList< QVector<QPointF> > detections = detectPenguins(frame);
-
-//        qDebug() << "(detectPenguins)Elapsed time: " << timer.elapsed() << "milliseconds";
-
-        m_colorRects.clear();
-        m_colorRects.insert("Q_COLOR_FRONTAL", detections);
-
         if (!detections.isEmpty())
         {
             num_detected += detections.length();
-            QList<QPointF> detectionCentroids;
 
+            m_colorRects.insert("Q_COLOR_FRONTAL", detections);
+
+            QDateTime dateTime;
+            QList<QPointF> detectionCentroids;
             for (int i = 0; i < detections.size(); i++)
             {
                 QVector<QPointF> rect = detections.at(i);
+
                 // calculate the penguin centre
                 double cx = 0.0f;
                 double cy = 0.0f;
@@ -123,18 +131,36 @@ void PenguinViewer::start()
 
                 cx = cx / rect.size();
                 cy = cy / rect.size();
-                // qDebug() << "Penguin centre: (" << cx << "," << cy << ")";
+
                 detectionCentroids.append(QPointF(cx, cy));
 
-//                int p_width = abs(rect.at(0).x() - rect.at(2).x());
-//                int p_height = abs(rect.at(1).y() - rect.at(3).y());
+                //                int p_width = abs(rect.at(0).x() - rect.at(2).x());
+                //                int p_height = abs(rect.at(1).y() - rect.at(3).y());
+
+                bool saveDetectedPenguins = false;
+                if (saveDetectedPenguins)
+                {
+                    QRect roi(rect.at(1).toPoint(), rect.at(3).toPoint());
+                    QImage detectedPenguinImage = m_image.copy(roi);
+                    QString timeFormat = QString("yyyy-MM-dd-hh-mm-ss-zzz-%1.jpg").arg(QString::number(i+1));
+                    QString savedImgName = dateTime.currentDateTime().toString(timeFormat);
+                    QString savedPath = QDir::currentPath() + QDir::separator() + QString("detected") + QDir::separator() + savedImgName;
+                    bool saved = detectedPenguinImage.save(savedPath, "JPEG");
+                    if (!saved)
+                    {
+                        qDebug() << "Can't save image " << savedPath;
+                    } else {
+                        m_detectedPenguinImageList.append(savedPath);
+                        emit detectedPenguinImageListChanged();
+                    }
+                }
             }
 
             if (m_trackers.isEmpty())
             {
                 Tracker *tracker = new Tracker;
                 tracker->setFrameSize(width(), height());
-//                tracker->setInitialState(cx, cy, p_width, p_height);
+                //                tracker->setInitialState(cx, cy, p_width, p_height);
                 m_trackers.append(tracker);
 
             } else {
@@ -150,13 +176,13 @@ void PenguinViewer::start()
 
         update();
 
-        if(cv::waitKey(10) >= 0)
+        if(cv::waitKey(30) >= 0)
             break;
     }
 
     m_surveillanceStatus = PenguinViewer::Idel;
     emit statusChanged();
-    qDebug() << "Num of detection: " << num_detected;
+    qDebug() << "Num of detections: " << num_detected;
 }
 
 void PenguinViewer::updateFPS()
@@ -165,6 +191,14 @@ void PenguinViewer::updateFPS()
     m_frameCount = 0;
 
     emit fpsChanged();
+}
+
+void PenguinViewer::setVJClassifierParams(double scaleFactor,
+                                          int minNeighbours,
+                                          int minWidth,
+                                          int minHeight)
+{
+    m_vjClassifier.setParams(scaleFactor, minNeighbours, QSize(minWidth, minHeight));
 }
 
 void PenguinViewer::paint(QPainter *painter)
@@ -250,11 +284,11 @@ void PenguinViewer::paint(QPainter *painter)
             painter->setOpacity(0.2);
             QList<QPointF> trajectoryPoints = tracker->getTrajectory();
             //            QList<QRect> trajectoryRects = tracker->getTrajectoryRects();
-//            qDebug() << "trajectory: " << trajectoryPoints;
+            //            qDebug() << "trajectory: " << trajectoryPoints;
             for (int i = 0; i < trajectoryPoints.size(); i++)
             {
                 //                painter->drawRect(trajectoryRects.at(i));
-                painter->drawEllipse(trajectoryPoints.at(i), 20, 20);
+                painter->drawEllipse(trajectoryPoints.at(i), 2, 2);
                 //                painter->drawRect(tracker->getTrackedRectangle());
             }
             painter->restore();
@@ -270,12 +304,54 @@ void PenguinViewer::paint(QPainter *painter)
 
 QList< QVector<QPointF> > PenguinViewer::detectPenguins(cv::Mat videoFrame)
 {
-    return m_vjClassifier.detectPenguins(videoFrame);
+    QList< QVector<QPointF> > filterdDections;
+    QList< QVector<QPointF> > detections = m_vjClassifier.detectPenguins(videoFrame);
+    filterdDections = detections;
+
+    if (applyColorFilter())
+    {
+        filterdDections.clear();
+        ColorFeatureExtractor colorFeatureExtractor;
+        for (int i = 0; i < detections.size(); i++)
+        {
+            QVector<QPointF> rect = detections.at(i);
+
+            QRect roi(rect.at(1).toPoint(), rect.at(3).toPoint());
+            QImage detectedPenguinImage = m_image.copy(roi);
+            cv::Mat patch = Utility::QImageToCvMat(detectedPenguinImage);
+            colorFeatureExtractor.compute(patch);
+
+            QVector<int> fv = colorFeatureExtractor.featureVector();
+
+            int numOfFeatures = 576;
+            cv::Mat sample = cv::Mat(1, numOfFeatures, CV_32FC1);
+            for (int attribute = 0; attribute < numOfFeatures; attribute++)
+            {
+                if (attribute < numOfFeatures)
+                {
+                    sample.at<float>(attribute) = fv.at(attribute);
+                }
+            }
+
+            int ret = m_randomForest.predict(sample);
+            if (ret)
+            {
+                filterdDections.append(rect);
+            }
+        }
+    }
+
+    return filterdDections;
 }
 
 QString PenguinViewer::currentFPS()
 {
     return QString::number(m_currentFPS);
+}
+
+QStringList PenguinViewer::detectedPenguinImageList() const
+{
+    return m_detectedPenguinImageList;
 }
 
 PenguinViewer::SurveillanceStatus PenguinViewer::status() const
@@ -293,6 +369,6 @@ void PenguinViewer::setApplyColorFilter(bool is)
     if (m_applyColorFilter != is)
     {
         m_applyColorFilter = is;
-        //        detectPenguins();
+        emit applyColorFilterChanged();
     }
 }
