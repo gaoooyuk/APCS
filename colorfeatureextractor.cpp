@@ -9,7 +9,7 @@ cv::Mat ColorFeatureExtractor::compute(QString imgPath)
 {
     cv::Mat frame_colorBins;
 
-    cv::Mat inputImage = cv::imread(imgPath.toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+    cv::Mat inputImage = cv::imread(imgPath.toUtf8().data(), cv::IMREAD_UNCHANGED);   // Read the file
     if (!inputImage.data)
     {
         qDebug() <<  "Could not open or find the image.";
@@ -23,8 +23,8 @@ cv::Mat ColorFeatureExtractor::compute(QString imgPath)
 cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage)
 {
     // User-defined bins
-    int horizontalBins = 8;
-    int verticalBins = 24;
+    int horizontalBins = 20;
+    int verticalBins = 60;
 
     cv::Mat frame_colorBins;
     m_featureVector.clear();
@@ -60,11 +60,11 @@ cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage)
         int r = 0;
         int g = 0;
         int b = 0;
-        for (int j = x; j < x + m_bin_width; j++)
+        for (int j = y; j < y + m_bin_height; j++)
         {
-            for (int k = y; k < y + m_bin_height; k++)
+            for (int k = x; k < x + m_bin_width; k++)
             {
-                cv::Vec3b intensity = inputImage.at<cv::Vec3b>(k, j);   // (y, x) in OpenCV
+                cv::Vec3b intensity = inputImage.at<cv::Vec3b>(j, k);   // (y, x) in OpenCV
                 uchar blue = intensity.val[0];
                 uchar green = intensity.val[1];
                 uchar red = intensity.val[2];
@@ -98,9 +98,4 @@ cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage)
     m_featureVector += output_b;
 
     return frame_colorBins;
-}
-
-QVector<int> ColorFeatureExtractor::featureVector() const
-{
-    return m_featureVector;
 }

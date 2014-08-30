@@ -1,7 +1,10 @@
 #include "violajonesclassifier.h"
 #include <QElapsedTimer>
+#include <cascadeparser.h>
 
 #include <QDebug>
+
+#include <iostream>
 
 ViolaJonesClassifier::ViolaJonesClassifier(QObject *parent) :
     QObject(parent)
@@ -11,13 +14,15 @@ ViolaJonesClassifier::ViolaJonesClassifier(QObject *parent) :
     //    m_cascade_xmls.push_back(penguin_cascade_90);
     //    m_cascade_xmls.push_back(penguin_cascade_90_upper);
     //    m_cascade_xmls.push_back(penguin_cascade_90_lower);
-//    m_cascade_xmls.push_back(penguin_cascade_45);
+    //    m_cascade_xmls.push_back(penguin_cascade_45);
     m_cascade_xmls.push_back(penguin_cascade);
 
     // Default parameters
     m_scaleFactor = 1.05;
     m_minNeighbours = 3;
     m_minSize = QSize(20, 60);
+
+    m_usingOpenCL = false;
 }
 
 void ViolaJonesClassifier::setParams(double scaleFactor, int minNeighbours, QSize minSize)
@@ -27,21 +32,26 @@ void ViolaJonesClassifier::setParams(double scaleFactor, int minNeighbours, QSiz
     m_minSize = minSize;
 }
 
-QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFrame)
+ViolaJonesClassifier::VJDetection ViolaJonesClassifier::detectPenguins(cv::Mat videoFrame)
 {
+#ifdef PERFORMANCE_TUNING
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
+#endif
 
-    QList< QVector<QPointF> > penguinRects;
+    VJDetection vjDetection;
 
-    //    m_colorRects.clear();
-
-    cv::Mat inputImage = videoFrame; // cv::imread(m_imagePath.toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+    cv::Mat inputImage = videoFrame;
     if (!inputImage.data)
     {
         qDebug() <<  "Could not open or find the image.";
-        return penguinRects;
+        return vjDetection;
     }
+
+    QList<QPolygonF> penguinPolygons;
+    QList<QRectF> penguinRects;
+    QList<QPointF> PenguinCenters;
+    QList<double> penguinWeights;
 
     int flips = 1;
     // int rorations[5] = {0, -30, -60, 30, 60};
@@ -73,10 +83,37 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
             for (std::vector<std::string>::iterator it = m_cascade_xmls.begin(); it != m_cascade_xmls.end(); ++it)
             {
                 std::string cascade_xml = *it;
-                if (!m_classifier.load(cascade_xml))
+
+                // TODO: the classifier is load multiple times
+                if (m_usingOpenCL ? !m_oclClassifier.load(cascade_xml) : !m_classifier.load(cascade_xml))
                 {
                     printf("Error loading descriptor: %s\n", cascade_xml.c_str());
-                    return penguinRects;;
+                    return vjDetection;
+                }
+
+                QString fileName = QDir::currentPath() + QDir::separator() + QString(cascade_xml.c_str());
+                QFile file(fileName);
+                if (!file.open(QFile::ReadOnly | QFile::Text))
+                {
+                    printf("Error parsing descriptor: %s\n", cascade_xml.c_str());
+                    return vjDetection;
+                }
+
+                CascadeParser parser;
+                double lastStageThreshold = 0.0;
+                int lastStageWeakTreesCount = 0;
+                if (parser.read(&file))
+                {
+                    CascadeObject cascade = parser.getCascadeObject();
+                    int stageCount = cascade.stageNum();
+                    Stage stage = cascade.getStage(stageCount-1);
+                    lastStageThreshold = stage.stageThreshold();
+                    lastStageWeakTreesCount = stage.maxWeakCount();
+
+                    //                    qDebug() << "fileName: " << fileName;
+                    //                    qDebug() << "stageCount: " << stageCount;
+                    //                    qDebug() << "lastStageThreshold: " << lastStageThreshold;
+                    //                    qDebug() << "lastStageWeakTreesCount: " << lastStageWeakTreesCount;
                 }
 
                 if (penguin_cascade_frontal == cascade_xml)
@@ -94,17 +131,21 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
                 cv::equalizeHist(frame, frame);
                 rotate(frame, rotation, frame_rotated);
 
-                std::vector<cv::Rect> rects = detect(frame_rotated);
-                QList< QVector<QPointF> > new_rects;
-                for (size_t m = 0; m < rects.size(); m++)
+                VJDetectionPrivate vjDetectionPrivate = detect(frame_rotated);
+                if (vjDetectionPrivate.rects.size() != vjDetectionPrivate.weights.size())
                 {
-                    cv::Rect rect = rects[m];
+                    qFatal("Error: ViolaJonesClassifier::detectPenguins rects.size() != weights.size()");
+                }
+
+                for (size_t m = 0; m < vjDetectionPrivate.rects.size(); m++)
+                {
+                    cv::Rect rect = vjDetectionPrivate.rects[m];
                     cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(rect.x + rect.width/2, rect.y + rect.height/2), rect.size(), 0);
 
                     cv::Point2f vertices[4];
                     rRect.points(vertices);
 
-                    QVector<QPointF> rect_points;
+                    QPolygonF polygon;
                     for (int n = 0; n < 4; n++)
                     {
                         // Rotate the rRect around image center
@@ -123,45 +164,86 @@ QList< QVector<QPointF> > ViolaJonesClassifier::detectPenguins(cv::Mat videoFram
                             vertices[n].x = imgWidth - vertices[n].x;
                         }
 
-                        rect_points.append(QPointF(vertices[n].x, vertices[n].y));
+                        polygon << QPointF(vertices[n].x, vertices[n].y);
                     }
 
-                    new_rects.append(rect_points);
+                    penguinPolygons.append(polygon);
+
+                    double weight = vjDetectionPrivate.weights.at(m) - lastStageThreshold;
+                    weight = ((weight/lastStageWeakTreesCount) + 1) / 2;
+                    penguinWeights.append(weight);
                 }
-
-                //                if (m_colorRects.contains(rectColor))
-                //                {
-                //                    QList< QVector<QPointF> > old_rects = m_colorRects.take(rectColor);
-                //                    new_rects.append(old_rects);
-                //                }
-                //                m_colorRects.insert(rectColor, new_rects);
-
-                penguinRects.append(new_rects);
             }
         }
     }
 
-//    qDebug() << "Penguin detection elapsed time: " << elapsedTimer.elapsed();
+#ifdef PERFORMANCE_TUNING
+    qDebug() << "ViolaJonesClassifier::detectPenguins elapsed time: " << elapsedTimer.elapsed();
+#endif
 
-    return penguinRects;
+    vjDetection.polygons = penguinPolygons;
+    vjDetection.weights = penguinWeights;
+
+    return vjDetection;
 }
 
-std::vector<cv::Rect> ViolaJonesClassifier::detect(cv::Mat frame)
+ViolaJonesClassifier::VJDetectionPrivate ViolaJonesClassifier::detect(cv::Mat frame)
 {
+    VJDetectionPrivate vjDetectionPrivate;
+
     std::vector<cv::Rect> rects;    // rects detected by cascade classifier
     std::vector<int> rejectLevels;
-    std::vector<double> confidences;
-    m_classifier.detectMultiScale(frame,
-                                  rects,
-                                  rejectLevels,
-                                  confidences,
-                                  m_scaleFactor,
-                                  m_minNeighbours,
-                                  0|CV_HAAR_SCALE_IMAGE,
-                                  cv::Size(m_minSize.width(), m_minSize.height()),
-                                  cv::Size(frame.cols, frame.rows),
-                                  false);
-    return rects;
+    std::vector<double> levelWeights;
+
+#ifdef PERFORMANCE_TUNING
+    QElapsedTimer elapsedTimer;
+    elapsedTimer.start();
+#endif
+
+    if (m_usingOpenCL)
+    {
+        cv::ocl::oclMat oclFrame(frame);
+        CvMemStorage *storage = cvCreateMemStorage(0);
+        CvSeq *objects;
+
+        objects = m_oclClassifier.oclHaarDetectObjects(oclFrame,
+                                                       storage,
+                                                       m_scaleFactor,
+                                                       m_minNeighbours,
+                                                       0|cv::CASCADE_SCALE_IMAGE,
+                                                       cv::Size(m_minSize.width(), m_minSize.height()),
+                                                       cv::Size(120,360));
+
+        std::vector<CvAvgComp> vecAvgComp;
+        cv::Seq<CvAvgComp>(objects).copyTo(vecAvgComp);
+        rects.resize(vecAvgComp.size());
+
+        for (std::vector<CvAvgComp>::iterator it = vecAvgComp.begin(); it != vecAvgComp.end(); ++it)
+        {
+            CvAvgComp cp = *it;
+            rects.push_back(cp.rect);
+        }
+    } else {
+        m_classifier.detectMultiScale(frame,
+                                      rects,
+                                      rejectLevels,
+                                      levelWeights,
+                                      m_scaleFactor,
+                                      m_minNeighbours,
+                                      0|cv::CASCADE_SCALE_IMAGE,
+                                      cv::Size(m_minSize.width(), m_minSize.height()),
+                                      cv::Size(120,360),
+                                      true);
+    }
+
+#ifdef PERFORMANCE_TUNING
+    qDebug() << "ViolaJonesClassifier::detect detectMultiScale elapsed time:" << elapsedTimer.elapsed();
+#endif
+
+    vjDetectionPrivate.rects = rects;
+    vjDetectionPrivate.weights = levelWeights;
+
+    return vjDetectionPrivate;
 }
 
 void ViolaJonesClassifier::rotate(cv::Mat& src, double angle, cv::Mat& dst)

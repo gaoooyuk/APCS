@@ -1,4 +1,4 @@
-QT += core qml quick widgets
+QT += core qml quick widgets opengl
 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 # Add more folders to ship with the application, here
 folder_01.source = qml/APCS
@@ -33,7 +33,11 @@ SOURCES += main.cpp \
     featureextractor.cpp \
     censusfeatureextractor.cpp \
     edgefeatureextractor.cpp \
-    trainingsystem.cpp
+    trainingsystem.cpp \
+    spatioframe.cpp \
+    spatiotemporalbox.cpp \
+    evaluationsystem.cpp \
+    aralclustering.cpp
 
 # Installation path
 # target.path =
@@ -70,7 +74,12 @@ HEADERS += \
     featureextractor.h \
     censusfeatureextractor.h \
     edgefeatureextractor.h \
-    trainingsystem.h
+    trainingsystem.h \
+    spatioframe.h \
+    spatiotemporalbox.h \
+    spatiotemporaldef.h \
+    evaluationsystem.h \
+    aralclustering.h
 
 INCLUDEPATH += /usr/local/include/
 LIBS += -L/usr/local/lib \
@@ -79,8 +88,11 @@ LIBS += -L/usr/local/lib \
     -lopencv_features2d \
     -lopencv_highgui \
     -lopencv_objdetect \
+    -lopencv_ocl \
     -lopencv_ml \
-    -lm
+    -lopencv_contrib \
+    -lm \
+    -litpp
 
 RESOURCES += \
     icons.qrc

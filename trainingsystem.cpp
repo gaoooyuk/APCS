@@ -1,6 +1,7 @@
 #include "trainingsystem.h"
 #include "utility.h"
 #include "colorfeatureextractor.h"
+#include "lbpfeatureextractor.h"
 
 #include <QProcess>
 
@@ -63,7 +64,7 @@ void TrainingSystem::train(int w,
         QStringList positiveSampleList =  getAllFilesOfDir(posFolder);
         QStringList negativeSampleList =  getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/negatives");
         generateImageDB("negatives.dat", negativeSampleList);
-        generateMoreSamples(300, w, h, positiveSampleList);
+        generateMoreSamples(620, w, h, positiveSampleList);
 
         // Create output dir
         QString dirPath = QDir::currentPath() + QDir::separator() + folderName;
@@ -87,8 +88,8 @@ void TrainingSystem::train(int w,
     QStringList trainingAgms;
     trainingAgms << "-vec" << "samples.vec";
     trainingAgms << "-bg" << "negatives.dat";
-    trainingAgms << "-numPos" << "200";
-    trainingAgms << "-numNeg" << "23000";
+    trainingAgms << "-numPos" << "600";
+    trainingAgms << "-numNeg" << "215892";
     trainingAgms << "-numStages" << QString::number(numStages);
     trainingAgms << "-data" << folderName;
     trainingAgms << "-mode" << "ALL";
@@ -110,10 +111,11 @@ void TrainingSystem::train(int w,
 
 void TrainingSystem::trainColorBins(int w, int h)
 {
+    qDebug() << "TrainingSystem::trainColorBins started";
     QString folderName = QString("cb_classifier_%1x%2").arg(QString::number(w)).arg(QString::number(h));
 
     QString posFolder
-            = QString("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal")
+            = QString("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_%1x%2")
             .arg(QString::number(w))
             .arg(QString::number(h));
     QStringList positiveSampleList =  getAllFilesOfDir(posFolder);
@@ -137,20 +139,32 @@ void TrainingSystem::trainColorBins(int w, int h)
         return;
     }
 
-    ColorFeatureExtractor colorFeatureExtractor;
     QFile fvFile(dirPath + QDir::separator() + QString("cb.classifier"));
     if (!fvFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
         return;
 
     // Generate feature vectors
+    long int posFVLen = -1;
+    long int negFVLen = -1;
+
     for (int i = 0; i < positiveSampleList.length(); i++)
     {
-        colorFeatureExtractor.compute(positiveSampleList.at(i));
-        QVector<int> fv = colorFeatureExtractor.featureVector();
-        QByteArray data;
-        for (int j = 0; j < fv.length(); j++)
+        qDebug() << "Extracting feature vector from #" << i+1 << "positive sample";
+        QString imgPath = positiveSampleList.at(i);
+        QVector<int> concatenatedFV = computeFeatureVectors(imgPath, w, h);
+
+        if (-1 == posFVLen)
         {
-            data.append(QString::number(fv.at(j)));
+            posFVLen = concatenatedFV.length();
+        } else {
+            if (posFVLen != concatenatedFV.length())
+                qFatal("Feature vector length within Positive Samples should be the same.");
+        }
+
+        QByteArray data;
+        for (int j = 0; j < concatenatedFV.length(); j++)
+        {
+            data.append(QString::number(concatenatedFV.at(j)));
             data.append(",");
         }
         data.append("1\n");   // positive label
@@ -159,21 +173,38 @@ void TrainingSystem::trainColorBins(int w, int h)
 
     for (int i = 0; i < negativeSampleList.length(); i++)
     {
-        colorFeatureExtractor.compute(negativeSampleList.at(i));
-        QVector<int> fv = colorFeatureExtractor.featureVector();
-        QByteArray data;
-        for (int j = 0; j < fv.length(); j++)
+        qDebug() << "Extracting feature vector from #" << i+1 << "negative sample";
+        QString imgPath = negativeSampleList.at(i);
+        QVector<int> concatenatedFV = computeFeatureVectors(imgPath, w, h);
+        if (-1 == negFVLen)
         {
-            data.append(QString::number(fv.at(j)));
+            negFVLen = concatenatedFV.length();
+        } else {
+            if (negFVLen != concatenatedFV.length())
+            {
+                qDebug("Feature vector length within Negative Samples should be the same, sampe abandoned.");
+                continue;
+            }
+        }
+
+        QByteArray data;
+        for (int j = 0; j < concatenatedFV.length(); j++)
+        {
+            data.append(QString::number(concatenatedFV.at(j)));
             data.append(",");
         }
         data.append("0\n");   // negative label
         fvFile.write(data);
     }
 
+    if (posFVLen != negFVLen)
+    {
+        qFatal("Feature vector length of Positive and Negative Samples should be the same.");
+    }
+
     fvFile.close();
 
-    qDebug() << "TrainingSystem::trainColorBins generated";
+    qDebug() << "TrainingSystem::trainColorBins finished";
 }
 
 void TrainingSystem::handleTrainingProcessError()
@@ -309,4 +340,32 @@ void TrainingSystem::generateMoreSamples(int targetNum,
     myProcess->waitForFinished();
 
     myProcess->deleteLater();
+}
+
+QVector<int> TrainingSystem::computeFeatureVectors(QString imgPath, int w, int h)
+{
+    QVector<int> concatenatedFV;
+
+    // Scale the image accordingly
+    QImage image;
+    image.load(imgPath);
+    if (image.isNull())
+        return concatenatedFV;
+
+    image = image.scaled(w, h);
+    cv::Mat cvImage = Utility::QImageToCvMat(image);
+
+    ColorFeatureExtractor colorFeatureExtractor;
+//    LbpFeatureExtractor lbpFeatureExtractor;
+
+    colorFeatureExtractor.compute(cvImage);
+    QVector<int> cbFv = colorFeatureExtractor.featureVector();
+
+//    lbpFeatureExtractor.compute(cvImage);
+//    QVector<int> lbpFv = lbpFeatureExtractor.featureVector();
+
+    concatenatedFV += cbFv;
+//    concatenatedFV += lbpFv;
+
+    return concatenatedFV;
 }

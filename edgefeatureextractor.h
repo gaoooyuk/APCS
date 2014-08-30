@@ -9,6 +9,7 @@ class EdgeFeatureExtractor : public FeatureExtractor
 public:
     explicit EdgeFeatureExtractor(QObject *parent = 0);
     cv::Mat compute(QString imgPath);
+    cv::Mat compute(cv::Mat inputImage);
 };
 
 #endif // EDGEFEATUREEXTRACTOR_H

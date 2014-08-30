@@ -1,9 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>qml/icons/analysis_haarlike.png</file>
-        <file>qml/icons/analysis_lbp.png</file>
-        <file>qml/icons/analysis_panel_btn.png</file>
-        <file>qml/icons/analysis_pixels.png</file>
         <file>qml/icons/APCS_Logo.png</file>
         <file>qml/icons/color_classifier_switch.png</file>
         <file>qml/icons/demoBtnLeft.png</file>
@@ -19,5 +15,16 @@
         <file>qml/icons/playBtn.png</file>
         <file>qml/icons/stopBtn.png</file>
         <file>qml/icons/color_classifier_switch_off.png</file>
+        <file>qml/icons/eye_off.png</file>
+        <file>qml/icons/eye_on.png</file>
+        <file>qml/icons/trajectoryAnalysisOff.png</file>
+        <file>qml/icons/trajectoryAnalysisOn.png</file>
+        <file>qml/icons/scaleBar.png</file>
+        <file>qml/icons/scaleCircle.png</file>
+        <file>qml/icons/overlay_01.png</file>
+        <file>qml/icons/plus_minus_btn.png</file>
+        <file>qml/icons/target.png</file>
+        <file>qml/icons/target_off.png</file>
+        <file>qml/icons/target_on.png</file>
     </qresource>
 </RCC>

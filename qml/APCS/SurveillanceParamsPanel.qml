@@ -12,8 +12,8 @@ Rectangle {
     }
 
     property int parameterLineHeight: 36
-    property real selectedScaleFactor: 1.01
-    property int selectedMinNeighbours: 1
+    property real selectedScaleFactor: 1.25
+    property int selectedMinNeighbours: 0
 
     Item {
         id: slidingWindowParamsPanel
@@ -46,9 +46,15 @@ Rectangle {
                              ListElement { text: "1.1"; value: 1.1 }
                              ListElement { text: "1.15"; value: 1.15 }
                              ListElement { text: "1.2"; value: 1.2 }
+                             ListElement { text: "1.25"; value: 1.25 }
+                             ListElement { text: "1.5"; value: 1.5 }
                          }
                          onCurrentIndexChanged: {
                              selectedScaleFactor = scalingFactorModel.get(currentIndex).value;
+                         }
+
+                         Component.onCompleted: {
+                             currentIndex = 5;
                          }
                      }
                 }
@@ -72,6 +78,7 @@ Rectangle {
                     ComboBox {
                          model: ListModel {
                              id: minNeighboursModel
+                             ListElement { text: "No Grouping"; value: 0 }
                              ListElement { text: "1"; value: 1 }
                              ListElement { text: "2"; value: 2 }
                              ListElement { text: "3"; value: 3 }
@@ -127,6 +134,35 @@ Rectangle {
     }
 
     Rectangle {
+        id: saveSwitch
+        width: 140
+        height: 40
+        anchors.bottom: applyBtn.top
+        anchors.bottomMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 10
+
+        Row {
+            anchors.fill: parent
+            spacing: 8
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "Save \n detections?"
+            }
+
+            Switch {
+                checked: false
+                anchors.verticalCenter: parent.verticalCenter
+                onCheckedChanged: {
+                    penguinViewer.saveDetectedPenguins = checked;
+                }
+            }
+        }
+    }
+
+    Rectangle {
         id: applyBtn
         width: 80
         height: 30
@@ -150,8 +186,8 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                penguinViewer.setVJClassifierParams(selectedScaleFactor, selectedMinNeighbours, 20, 60);
-//                penguinViewer.setVJClassifierParams(selectedScaleFactor, selectedMinNeighbours, 60, 180);
+//                penguinViewer.setVJClassifierParams(selectedScaleFactor, selectedMinNeighbours, 20, 60);
+                penguinViewer.setVJClassifierParams(selectedScaleFactor, selectedMinNeighbours, 40, 120);
             }
         }
     }

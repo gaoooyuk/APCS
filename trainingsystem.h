@@ -35,6 +35,7 @@ private:
                              int targetWidth,
                              int targetHeight,
                              QStringList fileList);
+    QVector<int> computeFeatureVectors(QString imgPath, int w, int h);
 
 private:
     QProcess *m_vjProcess;

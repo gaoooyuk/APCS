@@ -3,10 +3,6 @@
         <file>color_classifier_switch.png</file>
         <file>left_round.png</file>
         <file>right_round.png</file>
-        <file>analysis_panel_btn.png</file>
-        <file>analysis_haarlike.png</file>
-        <file>analysis_lbp.png</file>
-        <file>analysis_pixels.png</file>
         <file>APCS_Logo.png</file>
         <file>module_surveillance.png</file>
         <file>module_training.png</file>
@@ -18,5 +14,16 @@
         <file>playBtn.png</file>
         <file>stopBtn.png</file>
         <file>color_classifier_switch_off.png</file>
+        <file>eye_off.png</file>
+        <file>eye_on.png</file>
+        <file>trajectoryAnalysisOff.png</file>
+        <file>trajectoryAnalysisOn.png</file>
+        <file>scaleBar.png</file>
+        <file>scaleCircle.png</file>
+        <file>overlay_01.png</file>
+        <file>plus_minus_btn.png</file>
+        <file>target.png</file>
+        <file>target_off.png</file>
+        <file>target_on.png</file>
     </qresource>
 </RCC>

@@ -35,12 +35,18 @@ void RandomForest::train(QString filename, int numOfSamples, int numOfFeatures)
 
     m_randomForest.train(samples, CV_ROW_SAMPLE, labels, cv::Mat(), cv::Mat(), var_type, cv::Mat(), params);
 
-    test(filename, numOfSamples, numOfFeatures);
+//    test(filename, numOfSamples, numOfFeatures);
 }
 
 int RandomForest::predict(const cv::Mat& sample)
 {
     int res = (int)m_randomForest.predict(sample, cv::Mat());
+    return res;
+}
+
+float RandomForest::predict_prob(const cv::Mat& sample)
+{
+    float res = m_randomForest.predict_prob(sample, cv::Mat());
     return res;
 }
 

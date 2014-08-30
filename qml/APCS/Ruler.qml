@@ -6,6 +6,8 @@ Rectangle {
     height: 240
     color: "transparent"
     clip: true
+    antialiasing: true
+    smooth: true
 
     property bool rulerEnabled: false
     property string roiColor: "cyan"
@@ -14,6 +16,8 @@ Rectangle {
         width: 100
         height: 30
         color: "green"
+        antialiasing: true
+        smooth: true
 
         MouseArea {
             anchors.fill: parent
@@ -31,6 +35,8 @@ Rectangle {
         width: 100
         height: 200
         anchors.centerIn: parent
+        antialiasing: true
+        smooth: true
 
         Rectangle {
             width: 100
@@ -38,6 +44,8 @@ Rectangle {
             color: "transparent"
             border.width: 1
             border.color: "white"
+            antialiasing: true
+            smooth: true
         }
 
         // gridBg
@@ -53,6 +61,8 @@ Rectangle {
             y: mouseArea.mouseY
             anchors.left: parent.left
             color: roiColor
+            antialiasing: true
+            smooth: true
         }
 
         Rectangle {
@@ -62,6 +72,8 @@ Rectangle {
             x: mouseArea.mouseX
             anchors.bottom: parent.bottom
             color: roiColor
+            antialiasing: true
+            smooth: true
         }
 
         Text {
@@ -86,7 +98,8 @@ Rectangle {
             anchors.top: dashLineVertical.bottom
             anchors.topMargin: 1
             anchors.horizontalCenter: dashLineVertical.horizontalCenter
-
+            antialiasing: true
+            smooth: true
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             text: Math.floor(mouseArea.mouseX)

@@ -9,6 +9,7 @@ class LbpFeatureExtractor : public FeatureExtractor
 public:
     explicit LbpFeatureExtractor(QObject *parent = 0);
     cv::Mat compute(QString imgPath);
+    cv::Mat compute(cv::Mat inputImage);
 };
 
 #endif // LBPFEATUREEXTRACTOR_H

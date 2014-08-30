@@ -207,7 +207,9 @@ Rectangle {
         id: trainingSys
 
         Component.onCompleted: {
-            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal")
+//            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_8x24")
+            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_20x60")
+//            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_40x120")
         }
     }
 
@@ -226,8 +228,8 @@ Rectangle {
             anchors.fill: parent
             onClicked: {
 //                trainingSys.train(12, 36, 0.999, 0.5, 10, true)
-//                trainingSys.train(8, 24, 0.999, 0.5, 10, true)
-                trainingSys.trainColorBins(8, 24);
+//                trainingSys.train(8, 24, 0.999, 0.5, 6, false)
+                trainingSys.trainColorBins(20, 60);
             }
         }
     }
@@ -246,23 +248,6 @@ Rectangle {
 //            drag.maximumX: mainWindow.width - indicator.width
 //            drag.minimumY: 0
 //            drag.maximumY: mainWindow.height - indicator.height
-//        }
-//    }
-
-//    Image {
-//        id: analysisPanelBtn
-//        source: "qrc:///analysis_panel_btn.png"
-
-//        anchors.top: parent.top
-//        anchors.topMargin: 10
-//        anchors.right: colorClassifierBtn.left
-//        anchors.rightMargin: 10
-
-//        MouseArea {
-//            anchors.fill: parent
-//            onClicked: {
-//                analysisPanel.visible = !analysisPanel.visible
-//            }
 //        }
 //    }
 }

@@ -7,7 +7,6 @@
 /* The prior distribution over samples at the first timestep is a
    Gaussian with the following parameters. */
 #define PriorMean (0.0)
-//#define PriorSigma (0.2)
 #define PriorSigma (10)
 
 /* The process model is a first-order Auto-Regressive Process of the
@@ -19,8 +18,8 @@
    where w_t is zero-mean unit iid Gaussian noise. */
 #define ProcessMean (0)
 #define ProcessScaling (1)
-#define ProcessSigma (20)
+#define ProcessSigma (10)
 
 /* The observation density is a mixture of Gaussians, where each
    observed object has a different sigma as follows. */
-#define ObsSigma (10)
+#define ObsSigma (6)

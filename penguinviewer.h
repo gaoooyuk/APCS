@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QList>
 #include <QTimer>
+#include <QVariantList>
 
 #include "violajonesclassifier.h"
 #include "randomforest.h"
@@ -15,8 +16,16 @@ class PenguinViewer : public QQuickPaintedItem
 {
     Q_OBJECT
     Q_PROPERTY(bool applyColorFilter READ applyColorFilter WRITE setApplyColorFilter NOTIFY applyColorFilterChanged)
+    Q_PROPERTY(bool saveDetectedPenguins READ saveDetectedPenguins WRITE setSaveDetectedPenguins NOTIFY saveDetectedPenguinsChanged)
+    Q_PROPERTY(bool showConfidenceMap READ showConfidenceMap WRITE setShowConfidenceMap NOTIFY showConfidenceMapChanged)
+    Q_PROPERTY(bool showSMCProcess READ showSMCProcess WRITE setShowSMCProcess NOTIFY showSMCProcessChanged)
+    Q_PROPERTY(bool showTrajectories READ showTrajectories WRITE setShowTrajectories NOTIFY showTrajectoriesChanged)
+
     Q_PROPERTY(QString imagePath READ imagePath WRITE setImage)
     Q_PROPERTY(QString currentFPS READ currentFPS NOTIFY fpsChanged)
+    Q_PROPERTY(QString estimatedPenguinAmount READ estimatedPenguinAmount NOTIFY estimatedPenguinAmountChanged)
+    Q_PROPERTY(int currentFrameNo READ currentFrameNo NOTIFY currentFrameNoChanged)
+
     Q_PROPERTY(QStringList detectedPenguinImageList READ detectedPenguinImageList NOTIFY detectedPenguinImageListChanged)
 
     Q_ENUMS(SurveillanceStatus)
@@ -34,48 +43,92 @@ public:
     };
 
     void paint(QPainter *painter);
-    QList< QVector<QPointF> > detectPenguins(cv::Mat videoFrame);
+    ViolaJonesClassifier::VJDetection detectPenguins(cv::Mat videoFrame);
     QString currentFPS();
+    QString estimatedPenguinAmount();
     QStringList detectedPenguinImageList() const;
 
     PenguinViewer::SurveillanceStatus status() const;
 
 public slots:
-    bool applyColorFilter();
+    bool applyColorFilter() const;
     void setApplyColorFilter(bool is);
+
+    bool saveDetectedPenguins() const;
+    void setSaveDetectedPenguins(bool is);
+
+    bool showConfidenceMap() const;
+    void setShowConfidenceMap(bool is);
+
+    bool showSMCProcess() const;
+    void setShowSMCProcess(bool is);
+
+    bool showTrajectories() const;
+    void setShowTrajectories(bool is);
 
     QString imagePath();
     void setImage(QString imagePath);
 
     void start();
     void updateFPS();
+    int currentFrameNo() const;
 
     void setVJClassifierParams(double scaleFactor,
                                int minNeighbours,
                                int minWidth,
                                int minHeight);
 
+    void addTrackingManualLabeling(float x, float y, int frameNo);
+    bool saveTrackingManualLabelings(QString savedFileName);
+
 signals:
     void applyColorFilterChanged();
+    void saveDetectedPenguinsChanged();
+    void showConfidenceMapChanged();
+    void showSMCProcessChanged();
+    void showTrajectoriesChanged();
+
     void fpsChanged();
+    void estimatedPenguinAmountChanged();
+    void currentFrameNoChanged();
     void detectedPenguinImageListChanged();
     void statusChanged();
+    void newSpatioInfoAvailable(QObject *points,
+                                QObject *weights,
+                                QObject *dPoints,
+                                QObject *dWeights);
+    void clusterInfoAvailable(QObject* colorLabels, int frameNo);
+
+    void pointsAvailable(QObject *stPoints);
+    void filteredPointsAvailable(QObject *stFilteredPoints);
+    void conesAvailable(QObject *stCones);
+    void labelingPointsAvailable(QObject *lbPoints);
+    void clusterInfoAvailable3(QObject *clusterInfo);
+    void lineSegmentsAvailable(QObject *lineSegments);
 
 private:
     QImage m_image;
     QString m_imagePath;
-    QHash< QString, QList< QVector<QPointF> > > m_colorRects;
     bool m_applyColorFilter;
+    bool m_saveDetectedPenguins;
+    bool m_showConfidenceMap;
+    bool m_showSMCProcess;
+    bool m_showTrajectories;
+    bool m_saveManualLabelings;
 
     ViolaJonesClassifier m_vjClassifier;
     RandomForest m_randomForest;
-    QList<Tracker*> m_trackers;
+    Tracker m_trackingSystem;
     QStringList m_detectedPenguinImageList;
+
+    ViolaJonesClassifier::VJDetection m_detections;
 
     // For performance analysis
     QTimer m_timer;
+    int m_currentFrameNo;
     int m_frameCount;
     float m_currentFPS;
+    int m_estimatedPenguinAmount;
 
     SurveillanceStatus m_surveillanceStatus;
 };

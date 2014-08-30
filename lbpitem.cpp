@@ -9,7 +9,7 @@ LbpItem::LbpItem(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
     QString str = QString("/Users/apple/Desktop/Courses/Penguin/prototype/training/training/positives/frontal/ratio_1_3/pos-003.jpg");
-    cv::Mat inputImage = cv::imread(str.toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+    cv::Mat inputImage = cv::imread(str.toUtf8().data(), IMREAD_UNCHANGED);   // Read the file
     if (!inputImage.data)
     {
         qDebug() <<  "Could not open or find the image.";

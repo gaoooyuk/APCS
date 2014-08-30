@@ -4,19 +4,29 @@ Item {
     id: gridBgImp
     width: parent.width
     height: parent.height
+    antialiasing: true
+    smooth: true
 
     property int spacingLineNum: 30
-    property real lineHorizontalSpacing: (gridBg.width - spacingLineNum) / spacingLineNum
-    property real lineVerticalSpacing: (gridBg.height - spacingLineNum) / spacingLineNum
+    property real lineHorizontalSpacing: (gridBgImp.width - spacingLineNum) / spacingLineNum
+    property real lineVerticalSpacing: (gridBgImp.height - spacingLineNum) / spacingLineNum
 
     Row {
         anchors.fill: parent
-        spacing: gridBg.lineHorizontalSpacing
+        spacing: gridBgImp.lineHorizontalSpacing
+        antialiasing: true
+        smooth: true
+
         Repeater {
-            model: gridBg.spacingLineNum
+            antialiasing: true
+            smooth: true
+
+            model: gridBgImp.spacingLineNum
             Rectangle {
+                antialiasing: true
+                smooth: true
                 width: 1;
-                height: gridBg.height
+                height: gridBgImp.height
                 opacity: 0.8
                 color: "darkGray"
             }
@@ -25,11 +35,19 @@ Item {
 
     Column {
         anchors.fill: parent
-        spacing: gridBg.lineVerticalSpacing
+        spacing: gridBgImp.lineVerticalSpacing
+        antialiasing: true
+        smooth: true
+
         Repeater {
-            model: gridBg.spacingLineNum
+            antialiasing: true
+            smooth: true
+
+            model: gridBgImp.spacingLineNum
             Rectangle {
-                width: gridBg.width;
+                antialiasing: true
+                smooth: true
+                width: gridBgImp.width;
                 height: 1
                 opacity: 0.8
                 color: "darkGray"

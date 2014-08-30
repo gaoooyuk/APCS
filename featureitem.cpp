@@ -81,7 +81,7 @@ void FeatureItem::compute()
     {
     case FeatureItem::HaarLike:
     {
-        cv::Mat inputImage = cv::imread(m_imagePath.toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);
+        cv::Mat inputImage = cv::imread(m_imagePath.toUtf8().data(), cv::IMREAD_UNCHANGED);
         if (!inputImage.data)
         {
             qDebug() <<  "Could not open or find the image.";

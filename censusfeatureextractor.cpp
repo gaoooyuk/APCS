@@ -9,13 +9,20 @@ cv::Mat CensusFeatureExtractor::compute(QString imgPath)
 {
     cv::Mat frame_census;
 
-    cv::Mat inputImage = cv::imread(imgPath.toUtf8().data(), CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+    cv::Mat inputImage = cv::imread(imgPath.toUtf8().data(), cv::IMREAD_UNCHANGED);   // Read the file
     if (!inputImage.data)
     {
         qDebug() <<  "Could not open or find the image.";
         return frame_census;
     }
 
+    frame_census = compute(inputImage);
+    return frame_census;
+}
+
+cv::Mat CensusFeatureExtractor::compute(cv::Mat inputImage)
+{
+    cv::Mat frame_census;
     cv::Mat frame_gray;
     cv::cvtColor(inputImage, frame_gray, CV_BGR2GRAY);
     frame_gray.copyTo(frame_census);
@@ -25,6 +32,7 @@ cv::Mat CensusFeatureExtractor::compute(QString imgPath)
 
     census3x3(frame_gray.data, frame_census.data, w, h);
     frame_census.convertTo(frame_census, CV_8UC1);
+
     return frame_census;
 }
 

@@ -14,7 +14,7 @@ cv::Mat Laplacian::compute(cv::Mat &src)
 {
     cv::Mat src_gray;
     // Convert the image to grayscale
-    cv::cvtColor(src, src_gray, CV_BGR2GRAY);
+    cv::cvtColor(src, src_gray, cv::COLOR_BGR2GRAY);
 
     // Apply Laplace function
     cv::Mat dst;

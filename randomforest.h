@@ -11,6 +11,7 @@ public:
     explicit RandomForest(QObject *parent = 0);
     void train(QString filename, int numOfSamples, int numOfFeatures);
     int predict(const cv::Mat& sample);
+    float predict_prob(const cv::Mat& sample);
 
 private:
     void test(QString filename, int numOfSamples, int numOfFeatures);

@@ -17,6 +17,8 @@
 #include "penguinviewer.h"
 #include "featureitem.h"
 #include "trainingsystem.h"
+#include "spatioframe.h"
+#include "spatiotemporalbox.h"
 
 #include <QDebug>
 
@@ -39,25 +41,13 @@ int main(int argc, char *argv[])
     qmlRegisterType<PenguinViewer>("Core", 1, 0, "PenguinViewer");
     qmlRegisterType<FeatureItem>("Analysis", 1, 0, "FeatureItem");
     qmlRegisterType<TrainingSystem>("Core", 1, 0, "TrainingSystem");
+    qmlRegisterType<SpatioFrame>("Analysis", 1, 0, "SpatioFrame");
+    qmlRegisterType<SpatioTemporalBox>("Analysis", 1, 0, "SpatioTemporalBox");
 
     QtQuick2ApplicationViewer viewer;
+
     viewer.setMainQmlFile(QStringLiteral("qml/APCS/main.qml"));
     viewer.showExpanded();
-
-//    QString fileName("/Users/apple/Desktop/Courses/Penguin/prototype/cascade_45.xml");
-//    QFile file(fileName);
-//    if (!file.open(QFile::ReadOnly | QFile::Text))
-//    {
-//        return -1;
-//    }
-
-//    CascadeParser parser;
-//    if (!parser.read(&file))
-//    {
-//    }
-
-//    CascadeObject cascadeObj = parser.getCascadeObject();
-//    cascadeObj.prune(5);
 
 //    HaarFeatureItem *haarItem = viewer.rootObject()->findChild<HaarFeatureItem*>("haarItem");
 //    if (NULL == haarItem) {
