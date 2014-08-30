@@ -1,15 +1,9 @@
 import QtQuick 2.0
 
-Rectangle {
+Item {
     id: detectedObjectPanelImp
     width: 400
     height: 200
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: "#202020" }
-        GradientStop { position: 0.33; color: "#222222"}
-        GradientStop { position: 1.0; color: "#202020" }
-    }
-    radius: 5
 
     property var detectedModel: []
 

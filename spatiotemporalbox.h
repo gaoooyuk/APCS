@@ -15,6 +15,7 @@ class SpatioTemporalBox : public QQuickPaintedItem
 
     Q_PROPERTY(bool isDrawLBPoints READ isDrawLBPoints WRITE setIsDrawLBPoints NOTIFY isDrawLBPointsChanged)
     Q_PROPERTY(bool isDrawSTPoints READ isDrawSTPoints WRITE setIsDrawSTPoints NOTIFY isDrawSTPointsChanged)
+    Q_PROPERTY(bool isHighlightClusters READ isHighlightClusters WRITE setIsHighlightClusters NOTIFY isHighlightClustersChanged)
     Q_PROPERTY(bool isDrawFilteringSTPoints READ isDrawFilteringSTPoints WRITE setIsDrawFilteringSTPoints NOTIFY isDrawFilteringSTPointsChanged)
     Q_PROPERTY(bool isDrawClusterEigenLine READ isDrawClusterEigenLine WRITE setIsDrawClusterEigenLine NOTIFY isDrawClusterEigenLineChanged)
 
@@ -41,6 +42,9 @@ public slots:
     bool isDrawSTPoints() const;
     void setIsDrawSTPoints(const bool is);
 
+    bool isHighlightClusters() const;
+    void setIsHighlightClusters(const bool is);
+
     bool isDrawFilteringSTPoints() const;
     void setIsDrawFilteringSTPoints(const bool is);
 
@@ -62,6 +66,7 @@ signals:
     void rotationYChanged();
     void isDrawLBPointsChanged();
     void isDrawSTPointsChanged();
+    void isHighlightClustersChanged();
     void isDrawFilteringSTPointsChanged();
     void isDrawClusterEigenLineChanged();
 
@@ -91,6 +96,7 @@ private:
 
     bool m_isDrawLBPoints;
     bool m_isDrawSTPoints;
+    bool m_isHighlightClusters;
     bool m_isDrawFilteringSTPoints;
     bool m_isDrawClusterEigenLine;
 };

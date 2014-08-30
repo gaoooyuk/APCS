@@ -1,6 +1,7 @@
 import QtQuick 2.2
 import Analysis 1.0
 import QtGraphicalEffects 1.0
+import QtQuick.Dialogs 1.1
 
 Rectangle {
     id: stPlotImp
@@ -10,6 +11,8 @@ Rectangle {
     clip: true
     antialiasing: true
     smooth: true
+
+    property alias lbFileDialog: fileDialog
 
 //    ListModel {
 //        id: stModel
@@ -336,6 +339,12 @@ Rectangle {
         height: parent.height
         anchors.centerIn: parent
 
+        isDrawSTPoints: surveillanceArea.isDrawSTPoints
+        isDrawLBPoints: surveillanceArea.isDrawLBPoints
+        isHighlightClusters: surveillanceArea.isHighlightClusters
+        isDrawFilteringSTPoints: surveillanceArea.isDrawFilteringSTPoints
+        isDrawClusterEigenLine: surveillanceArea.isDrawClusterEigenLine
+
         MouseArea {
             anchors.fill: parent
             onWheel: {
@@ -368,136 +377,14 @@ Rectangle {
         }
     }
 
-    Item {
-        id: drawSTPointControl
-        width: 24
-        height: 24
-        anchors.left: rotateBarY.right
-        anchors.leftMargin: 60
-        anchors.verticalCenter: rotateBarY.verticalCenter
-
-        Image {
-            id: drawSTPointControlImg
-            width: parent.width
-            height: parent.height
-            smooth: true
-            source: stBox.isDrawSTPoints
-                    ? "qrc:///qml/icons/target_on.png"
-                    : "qrc:///qml/icons/target_off.png"
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                stBox.isDrawSTPoints = !stBox.isDrawSTPoints;
-            }
+    FileDialog {
+        id: fileDialog
+        title: "Please choose a .lb file"
+        nameFilters: [ "LB files (*.lb)" ]
+        onAccepted: {
+            stBox.loadSpatioTemporalLabelingPoints(fileUrl)
         }
     }
-
-    Item {
-        id: filteringSTPointBtn
-        width: filteringBtnText.width
-        height: filteringBtnText.height
-        anchors.right: drawSTPointControl.left
-        anchors.rightMargin: 4
-        anchors.top: drawSTPointControl.verticalCenter
-
-        Text {
-            id: filteringBtnText
-            width: paintedWidth
-            height: paintedWidth
-            color: "white"
-            text: stBox.isDrawFilteringSTPoints ?
-                      qsTr("Filtered")
-                    : qsTr("Original")
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                stBox.isDrawFilteringSTPoints = !stBox.isDrawFilteringSTPoints
-            }
-        }
-    }
-
-    Item {
-        id: drawLBPointControl
-        width: 24
-        height: 24
-        anchors.left: drawSTPointControl.right
-        anchors.leftMargin: 10
-        anchors.verticalCenter: drawSTPointControl.verticalCenter
-
-        Image {
-            id: drawLBPointControlImg
-            width: parent.width
-            height: parent.height
-            smooth: true
-            source: stBox.isDrawLBPoints
-                    ? "qrc:///qml/icons/target_on.png"
-                    : "qrc:///qml/icons/target_off.png"
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                stBox.isDrawLBPoints = !stBox.isDrawLBPoints;
-            }
-        }
-    }
-
-    Item {
-        id: loadLBPointBtn
-        width: loadBtnText.width
-        height: loadBtnText.height
-        anchors.left: drawLBPointControl.right
-        anchors.leftMargin: 10
-        anchors.verticalCenter: drawLBPointControl.verticalCenter
-
-        Text {
-            id: loadBtnText
-            width: paintedWidth
-            height: paintedWidth
-            color: "white"
-            text: qsTr("Load")
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                stBox.loadSpatioTemporalLabelingPoints("track_01.lb")
-            }
-        }
-    }
-
-
-    Item {
-        id: drawEigenLineControl
-        width: 24
-        height: 24
-        anchors.right: rotateBarY.left
-        anchors.rightMargin: 60
-        anchors.verticalCenter: rotateBarY.verticalCenter
-
-        Image {
-            id: drawEigenLineControlImg
-            width: parent.width
-            height: parent.height
-            smooth: true
-            source: stBox.isDrawClusterEigenLine
-                    ? "qrc:///qml/icons/target_on.png"
-                    : "qrc:///qml/icons/target_off.png"
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                stBox.isDrawClusterEigenLine = !stBox.isDrawClusterEigenLine;
-            }
-        }
-    }
-
-
 
     Item {
         id: timeScaleControl

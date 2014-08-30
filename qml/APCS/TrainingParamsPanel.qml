@@ -3,10 +3,15 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Layouts 1.1
 
-Item {
-    id: surveillanceParamsPanelImp
+Rectangle {
+    id: trainingParamsPanelImp
     width: 800
     height: 200
+    gradient: Gradient {
+        GradientStop { position: 0.0; color: "#bbbbbb" }
+        GradientStop { position: 0.33; color: "#cccccc"}
+        GradientStop { position: 1.0; color: "#bbbbbb" }
+    }
 
     property int parameterLineHeight: 36
     property real selectedScaleFactor: 1.25

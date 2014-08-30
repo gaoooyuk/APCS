@@ -7,7 +7,11 @@ import Core 1.0
 
 Rectangle {
     id: analysisPanelImp
-    color: "black"
+    gradient: Gradient {
+        GradientStop { position: 0.0; color: "#bbbbbb" }
+        GradientStop { position: 0.33; color: "#cccccc"}
+        GradientStop { position: 1.0; color: "#bbbbbb" }
+    }
 
     property string analysisImagePath: ""
 

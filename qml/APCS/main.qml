@@ -3,7 +3,7 @@ import QtQuick 2.2
 Rectangle {
     id: mainWindow
     width: 1280
-    height: 800
+    height: 840
     color: "black"
     state: "default"
 
@@ -73,12 +73,16 @@ Rectangle {
     // trainingWind
     TrainingWindow {
         id: trainingWind
+        width: parent.width
+        height: parent.height
         anchors.right: defaultWind.left
     }
 
     // surveillanceWind
     SurveillanceWindow {
         id: surveillanceWind
+        width: parent.width
+        height: parent.height
         anchors.left: defaultWind.right
     }
 }

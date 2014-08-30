@@ -9,9 +9,9 @@ import "ArrayJS.js" as ArrayJS
 
 Rectangle {
     id: surveillanceWindowImp
-    width: 1280
-    height: 800
     color: "black"
+
+    property alias stPlotItem: stPlot
 
     Item {
         id: surveillanceArea
@@ -21,6 +21,13 @@ Rectangle {
 
         property bool isHovered: false
         property bool showTrajectoryAnalysis: false
+        property bool enableManualLabeling: false
+
+        property bool isDrawSTPoints: true
+        property bool isDrawLBPoints: false
+        property bool isHighlightClusters: false
+        property bool isDrawFilteringSTPoints: false
+        property bool isDrawClusterEigenLine: false
 
         PenguinViewer {
             id: penguinViewer
@@ -30,26 +37,6 @@ Rectangle {
             onCurrentFrameNoChanged: {
 //                penguinViewer.saveTrackingManualLabelings("track_02.lb")
                 ArrayJS.clear();
-            }
-        }
-
-        // fpsPanel
-        Rectangle {
-            id: fpsPanel
-            width: 60
-            height: 30
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 10
-            color: "black"
-
-            Text {
-                anchors.centerIn: parent
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                color: "white"
-                text: qsTr("FPS: ") + penguinViewer.currentFPS
             }
         }
 
@@ -64,6 +51,9 @@ Rectangle {
                 surveillanceArea.isHovered = false;
             }
             onClicked: {
+                if (!surveillanceArea.enableManualLabeling)
+                    return;
+
                 var frameNo = penguinViewer.currentFrameNo;
                 var x = mouse.x;
                 var y = mouse.y;
@@ -103,8 +93,15 @@ Rectangle {
 
         Ruler {
             id: sizeRuler
-            x: surveillanceArea.width - sizeRuler.width - 10
-            y: fpsPanel.y + fpsPanel.height - sizeRuler.height
+
+            function init() {
+                x = surveillanceArea.width - sizeRuler.width - 10;
+                y = surveillanceArea.height - sizeRuler.height - 10
+            }
+
+            Component.onCompleted: {
+                init();
+            }
         }
 
         // playBtn
@@ -154,90 +151,14 @@ Rectangle {
                       : "qrc:///qml/icons/trajectoryAnalysisOff.png"
 
             anchors.left: parent.left
-            anchors.leftMargin: 20
-            anchors.bottom: confidenceMapBtn.top
+            anchors.leftMargin: 10
+            anchors.bottom: parent.bottom
             anchors.bottomMargin: 10
 
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
                     surveillanceArea.showTrajectoryAnalysis = !surveillanceArea.showTrajectoryAnalysis;
-                }
-            }
-        }
-
-        Image {
-            id: showTrajectoriesBtn
-            source: penguinViewer.showTrajectories ?
-                        "qrc:///qml/icons/trajectoryAnalysisOn.png"
-                      : "qrc:///qml/icons/trajectoryAnalysisOff.png"
-
-            anchors.left: smcProcessBtn.right
-            anchors.leftMargin: 10
-            anchors.bottom: colorClassifierBtn.top
-            anchors.bottomMargin: 10
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    penguinViewer.showTrajectories = !penguinViewer.showTrajectories;
-                }
-            }
-        }
-
-        Image {
-            id: smcProcessBtn
-            source: penguinViewer.showSMCProcess ?
-                        "qrc:///qml/icons/trajectoryAnalysisOn.png"
-                      : "qrc:///qml/icons/trajectoryAnalysisOff.png"
-
-            anchors.left: confidenceMapBtn.right
-            anchors.leftMargin: 10
-            anchors.bottom: colorClassifierBtn.top
-            anchors.bottomMargin: 10
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    penguinViewer.showSMCProcess = !penguinViewer.showSMCProcess;
-                }
-            }
-        }
-
-        Image {
-            id: confidenceMapBtn
-            source: penguinViewer.showConfidenceMap ?
-                        "qrc:///qml/icons/trajectoryAnalysisOn.png"
-                      : "qrc:///qml/icons/trajectoryAnalysisOff.png"
-
-            anchors.left: parent.left
-            anchors.leftMargin: 20
-            anchors.bottom: colorClassifierBtn.top
-            anchors.bottomMargin: 10
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    penguinViewer.showConfidenceMap = !penguinViewer.showConfidenceMap;
-                }
-            }
-        }
-
-        Image {
-            id: colorClassifierBtn
-            source: penguinViewer.applyColorFilter ?
-                        "qrc:///qml/icons/color_classifier_switch.png"
-                      : "qrc:///qml/icons/color_classifier_switch_off.png"
-
-            anchors.left: parent.left
-            anchors.leftMargin: 20
-            anchors.bottom: fpsPanel.top
-            anchors.bottomMargin: 10
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    penguinViewer.applyColorFilter = !penguinViewer.applyColorFilter;
                 }
             }
         }
@@ -273,34 +194,68 @@ Rectangle {
                     color: "white"
                     text: qsTr("Estimated No.: ") + penguinViewer.estimatedPenguinAmount
                 }
+                Text {
+                    width: paintedWidth
+                    height: 30
+                    anchors.left: parent.left
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    color: "white"
+                    text: qsTr("FPS: ") + penguinViewer.currentFPS
+                }
             }
         }
     }
 
-    DetectedObjectPanel {
-        id: detectedObjPanel
-        width: 400
-        height: 200
+    Rectangle {
+        width: parent.width
+        height: 240
         anchors.left: parent.left
+        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        detectedModel: penguinViewer.detectedPenguinImageList
+        visible: !surveillanceArea.showTrajectoryAnalysis
+
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#bbbbbb" }
+            GradientStop { position: 0.33; color: "#cccccc"}
+            GradientStop { position: 1.0; color: "#bbbbbb" }
+        }
+
+        DetectedObjectPanel {
+            id: detectedObjPanel
+            width: 400
+            height: parent.height
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            detectedModel: penguinViewer.detectedPenguinImageList
+        }
+
+        SurveillanceParamsPanel {
+            width: parent.width - detectedObjPanel.width
+            height: parent.height
+            anchors.left: detectedObjPanel.right
+            anchors.bottom: parent.bottom
+        }
     }
 
-    SurveillanceParamsPanel {
-        width: 800
-        height: 200
-        anchors.left: detectedObjPanel.right
+    SpatioTemporalAnalysisParamsPanel {
+        id: stAnalysisParamsPanel
+        width: parent.width
+        height: 240
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.bottom: parent.bottom
+        visible: surveillanceArea.showTrajectoryAnalysis
     }
 
     Item {
         id: btn_training
         width: 32
         height: 32
+        anchors.top: parent.top
+        anchors.topMargin: 4
         anchors.right: parent.right
         anchors.rightMargin: 10
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
 
         Image {
             id: img

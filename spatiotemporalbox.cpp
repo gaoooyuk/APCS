@@ -18,6 +18,7 @@ SpatioTemporalBox::SpatioTemporalBox(QQuickItem *parent)
 
     m_isDrawLBPoints = false;
     m_isDrawSTPoints = true;
+    m_isHighlightClusters = false;
     m_isDrawFilteringSTPoints = false;
     m_isDrawClusterEigenLine = false;
 }
@@ -91,7 +92,7 @@ void SpatioTemporalBox::paint(QPainter *painter)
     drawSTBox();
     drawSTPoints();
     drawSTClusters();
-    drawSTCones();
+//    drawSTCones();
     drawClusterEigenLine();
 //    drawSTLineSegments();
 
@@ -182,6 +183,22 @@ void SpatioTemporalBox::setIsDrawSTPoints(const bool is)
     {
         m_isDrawSTPoints = is;
         emit isDrawSTPointsChanged();
+
+        update();
+    }
+}
+
+bool SpatioTemporalBox::isHighlightClusters() const
+{
+    return m_isHighlightClusters;
+}
+
+void SpatioTemporalBox::setIsHighlightClusters(const bool is)
+{
+    if (m_isHighlightClusters != is)
+    {
+        m_isHighlightClusters = is;
+        emit isHighlightClustersChanged();
 
         update();
     }
@@ -307,8 +324,8 @@ void SpatioTemporalBox::loadSpatioTemporalLabelingPoints(const QString fileName)
 {
     m_lbPoints.clear();
     int dim = 3;
-    QString filePath = QDir::currentPath() + QDir::separator() + fileName;
-    QFile file(filePath);
+    QString filePath = fileName;
+    QFile file(filePath.replace("file:///", "/"));
     if (file.open(QFile::ReadOnly | QIODevice::Text))
     {
         while (!file.atEnd())
@@ -468,7 +485,7 @@ void SpatioTemporalBox::drawSTPoints()
 
 void SpatioTemporalBox::drawSTClusters()
 {
-    if (!m_isDrawSTPoints)
+    if (!m_isHighlightClusters)
         return;
 
     // Draw points in clusters
