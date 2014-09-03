@@ -5,7 +5,7 @@ ColorFeatureExtractor::ColorFeatureExtractor(QObject *parent) :
 {
 }
 
-cv::Mat ColorFeatureExtractor::compute(QString imgPath)
+cv::Mat ColorFeatureExtractor::compute(QString imgPath, int horizontalBins, int verticalBins)
 {
     cv::Mat frame_colorBins;
 
@@ -16,16 +16,12 @@ cv::Mat ColorFeatureExtractor::compute(QString imgPath)
         return frame_colorBins;
     }
 
-    frame_colorBins = compute(inputImage);
+    frame_colorBins = compute(inputImage, horizontalBins, verticalBins);
     return frame_colorBins;
 }
 
-cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage)
+cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage, int horizontalBins, int verticalBins)
 {
-    // User-defined bins
-    int horizontalBins = 20;
-    int verticalBins = 60;
-
     cv::Mat frame_colorBins;
     m_featureVector.clear();
 

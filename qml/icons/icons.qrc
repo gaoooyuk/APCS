@@ -25,5 +25,6 @@
         <file>target.png</file>
         <file>target_off.png</file>
         <file>target_on.png</file>
+        <file>tick.png</file>
     </qresource>
 </RCC>

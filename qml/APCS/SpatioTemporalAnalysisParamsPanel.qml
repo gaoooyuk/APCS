@@ -1,7 +1,8 @@
-import QtQuick 2.0
+import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Layouts 1.1
+import Analysis 1.0
 
 Rectangle {
     id: stAnalysisParamsPanelImp
@@ -94,7 +95,7 @@ Rectangle {
             Item {
                 Item {
                     id: analysisSwitchPanel
-
+                    width: 300
                     anchors.top: parent.top
                     anchors.topMargin: 21
                     anchors.left: parent.left
@@ -145,10 +146,80 @@ Rectangle {
                                     MenuItem {
                                         text: "File.."
                                         onTriggered: {
-                                            stPlotItem.lbFileDialog.open()
+                                            surveillanceArea.stPlotItem.lbFileDialog.open()
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                Item {
+                    id: displayOptionPanel
+                    width: 300
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    anchors.left: analysisSwitchPanel.right
+                    anchors.leftMargin: 20
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+
+                        GroupBox {
+                            id: displayModePanel
+                            width: 300
+                            height: parent.height
+                            anchors.left: parent.left
+                            anchors.leftMargin: 6
+
+                            title: qsTr("Display mode")
+
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                ExclusiveGroup { id: displayModeGroup }
+                                RadioButton {
+                                    text: qsTr("Dark")
+                                    exclusiveGroup: displayModeGroup
+                                    checked: true
+                                    onClicked: {
+                                        surveillanceArea.stPlotItem.color = "black"
+                                        surveillanceArea.stPlotItem.stBoxItem.changeDisplayMode(SpatioTemporalBox.DarkMode)
+                                    }
+                                }
+                                RadioButton {
+                                    text: qsTr("Bright")
+                                    exclusiveGroup: displayModeGroup
+                                    onClicked: {
+                                        surveillanceArea.stPlotItem.color = "white"
+                                        surveillanceArea.stPlotItem.stBoxItem.changeDisplayMode(SpatioTemporalBox.BrightMode)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Item {
+                    id: condensationPanel
+                    width: 300
+                    anchors.top: parent.top
+                    anchors.topMargin: 21
+                    anchors.left: displayOptionPanel.right
+                    anchors.leftMargin: 20
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+
+                        CheckBox {
+                            id: condensationAnalysisCB
+                            text: "CONDENDATION analysis"
+                            checked: false
+                            Layout.minimumWidth: 100
+
+                            onCheckedChanged: {
+                                surveillanceArea.stPlotItem.condensationAnalysis.visible = checked;
                             }
                         }
                     }

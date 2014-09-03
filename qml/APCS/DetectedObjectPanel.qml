@@ -1,11 +1,21 @@
-import QtQuick 2.0
+import QtQuick 2.2
 
 Item {
     id: detectedObjectPanelImp
     width: 400
     height: 200
 
-    property var detectedModel: []
+    ListModel {
+        id: detectedModel
+    }
+
+    Connections {
+        target: penguinViewer
+        onDetectedPenguinImageSaved: {
+            detectedModel.append({"path": savedPath})
+            savedImageView.positionViewAtEnd()
+        }
+    }
 
     Text {
         id: centerText
@@ -19,16 +29,21 @@ Item {
     }
 
     ListView {
+        id: savedImageView
         width: parent.width - 8
         height: 180
         anchors.centerIn: parent
         clip: true
         orientation: ListView.Horizontal
-        model: detectedObjectPanelImp.detectedModel
+        model: detectedModel
         delegate: Image {
             width: 60
             height: 180
-            source: modelData
+            source: detectedModel.get(index).path
+        }
+
+        move: Transition {
+            NumberAnimation { properties: "x"; duration: 1000 }
         }
     }
 

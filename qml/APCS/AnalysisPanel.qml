@@ -7,11 +7,11 @@ import Core 1.0
 
 Rectangle {
     id: analysisPanelImp
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: "#bbbbbb" }
-        GradientStop { position: 0.33; color: "#cccccc"}
-        GradientStop { position: 1.0; color: "#bbbbbb" }
-    }
+//    gradient: Gradient {
+//        GradientStop { position: 0.0; color: "#bbbbbb" }
+//        GradientStop { position: 0.33; color: "#cccccc"}
+//        GradientStop { position: 1.0; color: "#bbbbbb" }
+//    }
 
     property string analysisImagePath: ""
 
@@ -48,24 +48,24 @@ Rectangle {
                 featureExtractorType: t_type
             }
 
-            Glow {
-                id: glow
-                anchors.fill: featureImg
-                visible: index == analysisToolListView.currentIndex
-                radius: 12
-                samples: 24
-                spread: 0.8
-                transparentBorder: true
-                color: "lightsteelblue"
-                source: featureImg
-            }
+//            Glow {
+//                id: glow
+//                anchors.fill: featureImg
+//                visible: index == analysisToolListView.currentIndex
+//                radius: 12
+//                samples: 24
+//                spread: 0.8
+//                transparentBorder: true
+//                color: "lightsteelblue"
+//                source: featureImg
+//            }
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    analysisToolListView.currentIndex = index
-                }
-            }
+//            MouseArea {
+//                anchors.fill: parent
+//                onClicked: {
+//                    analysisToolListView.currentIndex = index
+//                }
+//            }
 
 //            Text {
 //                id: toolName

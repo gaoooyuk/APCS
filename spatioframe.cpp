@@ -14,9 +14,6 @@ void SpatioFrame::paint(QPainter *painter)
     if (m_detectionPoints.length() != m_detectionWeights.length())
         return;
 
-    if (m_detectionPoints.length() != m_detectionLabelColors.length())
-        return;
-
     painter->setRenderHints(QPainter::Antialiasing, true);
 
     painter->save();
@@ -58,8 +55,7 @@ void SpatioFrame::paint(QPainter *painter)
             QPointF pos = m_detectionPoints.at(j);
             pos /= 4;
 
-            QColor color = m_detectionLabelColors.at(j);
-            pen.setColor(color);
+            pen.setColor(Qt::white);
             painter->setPen(pen);
             painter->drawPoint(pos);
         }
@@ -167,32 +163,6 @@ void SpatioFrame::importDetectionWeights(QObject *detectionWeights)
     foreach (QVariant var, vl)
     {
         m_detectionWeights.append(var.toDouble());
-    }
-
-    update();
-}
-
-QObject* SpatioFrame::detectionLabelColors()
-{
-    QVariantList vl;
-    foreach (QColor c, m_detectionLabelColors)
-    {
-        vl.append(c);
-    }
-
-    QObject *o = new QObject;
-    o->setProperty("dColors", vl);
-    return o;
-}
-
-void SpatioFrame::importDetectionLabelColors(QObject *detectionLabelColors)
-{
-    m_detectionLabelColors.clear();
-    QVariantList vl = detectionLabelColors->property("dColors").toList();
-
-    foreach (QVariant var, vl)
-    {
-        m_detectionLabelColors.append(var.value<QColor>());
     }
 
     update();

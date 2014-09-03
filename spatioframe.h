@@ -14,8 +14,6 @@ class SpatioFrame : public QQuickPaintedItem
     Q_PROPERTY(QObject* detectionPoints READ detectionPoints WRITE importDetectionPositions)
     Q_PROPERTY(QObject* detectionWeights READ detectionWeights WRITE importDetectionWeights)
 
-    Q_PROPERTY(QObject* detectionLabelColors READ detectionLabelColors WRITE importDetectionLabelColors)
-
     Q_ENUMS(PlotType)
 
 public:
@@ -43,9 +41,6 @@ public slots:
     void importDetectionPositions(QObject *detectionPoints);
     void importDetectionWeights(QObject *detectionWeights);
 
-    QObject* detectionLabelColors();
-    void importDetectionLabelColors(QObject *detectionLabelColors);
-
     void changePlotType(PlotType type);
 
 private:
@@ -54,8 +49,6 @@ private:
 
     QList<QPointF> m_detectionPoints;
     QList<double> m_detectionWeights;
-
-    QList<QColor> m_detectionLabelColors;
 
     PlotType m_plotType;
 };

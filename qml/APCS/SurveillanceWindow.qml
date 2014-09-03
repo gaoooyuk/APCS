@@ -11,13 +11,13 @@ Rectangle {
     id: surveillanceWindowImp
     color: "black"
 
-    property alias stPlotItem: stPlot
-
     Item {
         id: surveillanceArea
         width: parent.width
         height: 600
         anchors.horizontalCenter: parent.horizontalCenter
+
+        property alias stPlotItem: stPlot
 
         property bool isHovered: false
         property bool showTrajectoryAnalysis: false
@@ -104,6 +104,15 @@ Rectangle {
             }
         }
 
+        FileDialog {
+            id: videoFileDialog
+            title: "Please choose a video file"
+            nameFilters: [ "Video files (*.mp4 *.avi *wmv *flv)" ]
+            onAccepted: {
+                penguinViewer.start(fileUrl);
+            }
+        }
+
         // playBtn
         Image {
             id: playBtn
@@ -117,7 +126,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    penguinViewer.start();
+                    videoFileDialog.open()
                 }
             }
         }
@@ -174,6 +183,8 @@ Rectangle {
             anchors.topMargin: 10
             color: "transparent"
 
+            property string textColor: "darkCyan"
+
             Column {
                 anchors.fill: parent
                 Text {
@@ -182,7 +193,7 @@ Rectangle {
                     anchors.left: parent.left
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    color: "white"
+                    color: infoPanel.textColor
                     text: qsTr("Current Frame: ") + penguinViewer.currentFrameNo
                 }
                 Text {
@@ -191,7 +202,7 @@ Rectangle {
                     anchors.left: parent.left
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    color: "white"
+                    color: infoPanel.textColor
                     text: qsTr("Estimated No.: ") + penguinViewer.estimatedPenguinAmount
                 }
                 Text {
@@ -200,7 +211,7 @@ Rectangle {
                     anchors.left: parent.left
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    color: "white"
+                    color: infoPanel.textColor
                     text: qsTr("FPS: ") + penguinViewer.currentFPS
                 }
             }
@@ -227,7 +238,6 @@ Rectangle {
             height: parent.height
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            detectedModel: penguinViewer.detectedPenguinImageList
         }
 
         SurveillanceParamsPanel {

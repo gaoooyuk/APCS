@@ -20,13 +20,12 @@ class PenguinViewer : public QQuickPaintedItem
     Q_PROPERTY(bool showConfidenceMap READ showConfidenceMap WRITE setShowConfidenceMap NOTIFY showConfidenceMapChanged)
     Q_PROPERTY(bool showSMCProcess READ showSMCProcess WRITE setShowSMCProcess NOTIFY showSMCProcessChanged)
     Q_PROPERTY(bool showTrajectories READ showTrajectories WRITE setShowTrajectories NOTIFY showTrajectoriesChanged)
+    Q_PROPERTY(bool enableInspection READ enableInspection WRITE setEnableInspection NOTIFY enableInspectionChanged)
 
     Q_PROPERTY(QString imagePath READ imagePath WRITE setImage)
     Q_PROPERTY(QString currentFPS READ currentFPS NOTIFY fpsChanged)
     Q_PROPERTY(QString estimatedPenguinAmount READ estimatedPenguinAmount NOTIFY estimatedPenguinAmountChanged)
     Q_PROPERTY(int currentFrameNo READ currentFrameNo NOTIFY currentFrameNoChanged)
-
-    Q_PROPERTY(QStringList detectedPenguinImageList READ detectedPenguinImageList NOTIFY detectedPenguinImageListChanged)
 
     Q_ENUMS(SurveillanceStatus)
     Q_PROPERTY(SurveillanceStatus status READ status NOTIFY statusChanged)
@@ -46,8 +45,6 @@ public:
     ViolaJonesClassifier::VJDetection detectPenguins(cv::Mat videoFrame);
     QString currentFPS();
     QString estimatedPenguinAmount();
-    QStringList detectedPenguinImageList() const;
-
     PenguinViewer::SurveillanceStatus status() const;
 
 public slots:
@@ -66,10 +63,13 @@ public slots:
     bool showTrajectories() const;
     void setShowTrajectories(bool is);
 
+    bool enableInspection() const;
+    void setEnableInspection(bool is);
+
     QString imagePath();
     void setImage(QString imagePath);
 
-    void start();
+    void start(QString videoFile);
     void updateFPS();
     int currentFrameNo() const;
 
@@ -87,23 +87,23 @@ signals:
     void showConfidenceMapChanged();
     void showSMCProcessChanged();
     void showTrajectoriesChanged();
+    void enableInspectionChanged();
 
+    void detectedPenguinImageSaved(QString savedPath);
     void fpsChanged();
     void estimatedPenguinAmountChanged();
     void currentFrameNoChanged();
-    void detectedPenguinImageListChanged();
     void statusChanged();
     void newSpatioInfoAvailable(QObject *points,
                                 QObject *weights,
                                 QObject *dPoints,
                                 QObject *dWeights);
-    void clusterInfoAvailable(QObject* colorLabels, int frameNo);
 
     void pointsAvailable(QObject *stPoints);
     void filteredPointsAvailable(QObject *stFilteredPoints);
     void conesAvailable(QObject *stCones);
     void labelingPointsAvailable(QObject *lbPoints);
-    void clusterInfoAvailable3(QObject *clusterInfo);
+    void clusterInfoAvailable(QObject *clusterInfo);
     void lineSegmentsAvailable(QObject *lineSegments);
 
 private:
@@ -114,12 +114,12 @@ private:
     bool m_showConfidenceMap;
     bool m_showSMCProcess;
     bool m_showTrajectories;
+    bool m_enableInspection;
     bool m_saveManualLabelings;
 
     ViolaJonesClassifier m_vjClassifier;
     RandomForest m_randomForest;
     Tracker m_trackingSystem;
-    QStringList m_detectedPenguinImageList;
 
     ViolaJonesClassifier::VJDetection m_detections;
 
@@ -129,6 +129,7 @@ private:
     int m_frameCount;
     float m_currentFPS;
     int m_estimatedPenguinAmount;
+    int m_skipAmount;
 
     SurveillanceStatus m_surveillanceStatus;
 };

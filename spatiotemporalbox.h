@@ -19,9 +19,16 @@ class SpatioTemporalBox : public QQuickPaintedItem
     Q_PROPERTY(bool isDrawFilteringSTPoints READ isDrawFilteringSTPoints WRITE setIsDrawFilteringSTPoints NOTIFY isDrawFilteringSTPointsChanged)
     Q_PROPERTY(bool isDrawClusterEigenLine READ isDrawClusterEigenLine WRITE setIsDrawClusterEigenLine NOTIFY isDrawClusterEigenLineChanged)
 
+    Q_ENUMS(DisplayMode)
+
 public:
     SpatioTemporalBox(QQuickItem *parent = 0);
     void paint(QPainter *painter);
+
+    enum DisplayMode {
+        DarkMode,
+        BrightMode
+    };
 
 public slots:
     float rotationX();
@@ -61,6 +68,8 @@ public slots:
 
     void loadSpatioTemporalLabelingPoints(const QString fileName);
 
+    void changeDisplayMode(DisplayMode mode);
+
 signals:
     void rotationXChanged();
     void rotationYChanged();
@@ -99,6 +108,8 @@ private:
     bool m_isHighlightClusters;
     bool m_isDrawFilteringSTPoints;
     bool m_isDrawClusterEigenLine;
+
+    DisplayMode m_displayMode;
 };
 
 #endif // SPATIOTEMPORALBOX_H

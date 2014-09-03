@@ -23,12 +23,8 @@ PenguinViewer::PenguinViewer(QQuickItem *parent)
     m_showConfidenceMap = false;
     m_showSMCProcess = false;
     m_showTrajectories = false;
+    m_enableInspection = false;
     m_saveManualLabelings = false;
-
-    cap.open("/Users/apple/Desktop/Courses/Penguin/tracking_videos/tracking2.mp4");
-//    cap.open("/Users/apple/Desktop/Courses/Penguin/tracking_videos/08.mp4");
-    if(!cap.isOpened())  // check if we succeeded
-        qDebug() << "Camera failed.";
 
     cv::namedWindow(CV_WINDOW_NAME, 1);
     cv::resizeWindow(CV_WINDOW_NAME, 0, 0);
@@ -37,9 +33,10 @@ PenguinViewer::PenguinViewer(QQuickItem *parent)
     m_frameCount = 0;
     m_currentFPS = 0.0f;
     m_estimatedPenguinAmount = 0;
+    m_skipAmount = 10;
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(updateFPS()));
 
-    m_vjClassifier.setParams(1.25, 0, QSize(40, 120));
+    m_vjClassifier.setParams(1.25, 3, QSize(40, 120));
     m_surveillanceStatus = PenguinViewer::Idel;
 }
 
@@ -67,15 +64,26 @@ void PenguinViewer::setImage(QString imagePath)
     update();
 }
 
-void PenguinViewer::start()
+void PenguinViewer::start(QString videoFile)
 {
+    QString filePath = videoFile.replace("file:///", "/");
+
+    qDebug() << "filePath" << filePath;
+
+    cap.open(filePath.toStdString());
+    if(!cap.isOpened())  // check if we succeeded
+    {
+        qDebug() << "Video initialize failed.";
+        return;
+    }
+
     // Load and training random forest classifier
     m_randomForest.train("cb_classifier_20x60/cb.classifier", 1226, 3600);
 
     m_surveillanceStatus = PenguinViewer::Running;
     emit statusChanged();
 
-    m_detectedPenguinImageList.clear();
+    m_currentFrameNo = 0;
 
     //    #define ABC
 
@@ -122,7 +130,7 @@ void PenguinViewer::start()
         m_detections = detectPenguins(frame);
         if (!m_detections.polygons.isEmpty())
         {
-            if (saveDetectedPenguins())
+            if (saveDetectedPenguins() && (0 == m_currentFrameNo % m_skipAmount))
             {
                 QDateTime dateTime;
                 for (int i = 0; i < m_detections.polygons.size(); i++)
@@ -137,8 +145,7 @@ void PenguinViewer::start()
                     {
                         qDebug() << "Can't save image " << savedPath;
                     } else {
-                        m_detectedPenguinImageList.append(savedPath);
-                        emit detectedPenguinImageListChanged();
+                        emit detectedPenguinImageSaved(savedPath);
                     }
                 }
             }
@@ -210,7 +217,7 @@ void PenguinViewer::start()
             }
             QObject *clusterInfoObj = new QObject;
             clusterInfoObj->setProperty("clusterInfo", clustersVL);
-            emit clusterInfoAvailable3(clusterInfoObj);
+            emit clusterInfoAvailable(clusterInfoObj);
 
             // Tracking line segments
             QList<STLine> trackingLineSegments = m_trackingSystem.getAllLineSegments();
@@ -252,42 +259,26 @@ void PenguinViewer::start()
             o_dw->setProperty("dWeights", dWeights);
 
             emit newSpatioInfoAvailable(o_p, o_w, o_dp, o_dw);
-
-            QList< QList<QColor> > colorLabelsForFrames = m_trackingSystem.getColorLabels();
-            for (int i = 0; i < colorLabelsForFrames.length(); i++)
-            {
-                QList<QColor> colorLabels = colorLabelsForFrames.at(i);
-                QVariantList dColors;
-                for (int j = 0; j < colorLabels.length(); j++)
-                {
-                    dColors.append(colorLabels.at(j));
-                }
-
-                QObject *o_dc = new QObject;
-                o_dc->setProperty("dColors", dColors);
-                emit clusterInfoAvailable(o_dc, i);
-            }
         }
 
         update();
 
-#ifdef ABC
-        cv::waitKey();
-#else
-        cv::waitKey();
-
-        //        if(cv::waitKey(10) >= 0)
-        //            break;
-#endif
+        if (m_enableInspection)
+        {
+            cv::waitKey();
+        } else {
+            if(cv::waitKey(30) >= 0)
+                break;
+        }
     }
 
-    QList<int> sectionClusteringResult = m_trackingSystem.getCountingResult();
-    qDebug() << "APCS Result:";
-    for (int j = 0; j < sectionClusteringResult.length(); j++)
-    {
-        int estimatedCount = sectionClusteringResult.at(j);
-        qDebug() << QString("For section %1, the estimated penguin amount is %2").arg(j).arg(estimatedCount);
-    }
+    //    QList<int> sectionClusteringResult = m_trackingSystem.getCountingResult();
+    //    qDebug() << "APCS Result:";
+    //    for (int j = 0; j < sectionClusteringResult.length(); j++)
+    //    {
+    //        int estimatedCount = sectionClusteringResult.at(j);
+    //        qDebug() << QString("For section %1, the estimated penguin amount is %2").arg(j).arg(estimatedCount);
+    //    }
 
     m_surveillanceStatus = PenguinViewer::Idel;
     emit statusChanged();
@@ -494,36 +485,17 @@ ViolaJonesClassifier::VJDetection PenguinViewer::detectPenguins(cv::Mat videoFra
 
         for (int i = 0; i < polygons.size(); i++)
         {
+            int w = m_randomForest.workSize().width();
+            int h = m_randomForest.workSize().height();
+
             QRectF roi = polygons.at(i).boundingRect();
             QImage image = m_image.copy(roi.toRect());
-            //            image = image.scaled(20, 60);
+            image = image.scaled(w, h);
             cv::Mat cvImage = Utility::QImageToCvMat(image);
 
-            QVector<int> concatenatedFV;
+            cv::Mat featureVector = m_randomForest.computeFeatureVectors(cvImage, w, h);
 
-            ColorFeatureExtractor colorFeatureExtractor;
-            LbpFeatureExtractor lbpFeatureExtractor;
-
-            colorFeatureExtractor.compute(cvImage);
-            QVector<int> cbFv = colorFeatureExtractor.featureVector();
-
-            //            lbpFeatureExtractor.compute(cvImage);
-            //            QVector<int> lbpFv = lbpFeatureExtractor.featureVector();
-
-            concatenatedFV += cbFv;
-            //            concatenatedFV += lbpFv;
-
-            int numOfFeatures = 3600;
-            cv::Mat sample = cv::Mat(1, numOfFeatures, CV_32FC1);
-            for (int attribute = 0; attribute < numOfFeatures; attribute++)
-            {
-                if (attribute < numOfFeatures)
-                {
-                    sample.at<float>(attribute) = concatenatedFV.at(attribute);
-                }
-            }
-
-            float ret = m_randomForest.predict_prob(sample);
+            float ret = m_randomForest.predict_prob(featureVector);
             double weight = detections.weights.at(i);
             double newWeight = weight * ret;
 
@@ -549,11 +521,6 @@ QString PenguinViewer::currentFPS()
 QString PenguinViewer::estimatedPenguinAmount()
 {
     return QString::number(m_estimatedPenguinAmount);
-}
-
-QStringList PenguinViewer::detectedPenguinImageList() const
-{
-    return m_detectedPenguinImageList;
 }
 
 PenguinViewer::SurveillanceStatus PenguinViewer::status() const
@@ -631,5 +598,19 @@ void PenguinViewer::setShowTrajectories(bool is)
         m_showTrajectories = is;
         emit showTrajectoriesChanged();
         update();
+    }
+}
+
+bool PenguinViewer::enableInspection() const
+{
+    return m_enableInspection;
+}
+
+void PenguinViewer::setEnableInspection(bool is)
+{
+    if (m_enableInspection != is)
+    {
+        m_enableInspection = is;
+        emit enableInspectionChanged();
     }
 }

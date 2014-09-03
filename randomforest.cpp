@@ -1,9 +1,17 @@
 #include "randomforest.h"
+#include "utility.h"
+#include "colorfeatureextractor.h"
+#include "lbpfeatureextractor.h"
+#include "censusfeatureextractor.h"
+#include "edgefeatureextractor.h"
+#include <QImage>
+
 #include <QDebug>
 
 RandomForest::RandomForest(QObject *parent) :
     QObject(parent)
 {
+    m_numOfFeatures = 0;
 }
 
 void RandomForest::train(QString filename, int numOfSamples, int numOfFeatures)
@@ -17,37 +25,108 @@ void RandomForest::train(QString filename, int numOfSamples, int numOfFeatures)
 
     int ret = loadData(filename.toUtf8().data(), samples, labels, numOfSamples, numOfFeatures);
     if (!ret)
+    {
+        qDebug() << "RandomForest::train loadData failed.";
         return;
+    }
 
     float priors[] = {1,1};  // weights of each classification for classes
     CvRTParams params = CvRTParams(50, // max depth
                                    numOfSamples * 0.01, // min sample count
                                    0, // regression accuracy: N/A here
                                    false, // compute surrogate split, no missing data
-                                   2, // max number of categories (use sub-optimal algorithm for larger numbers)
+                                   5, // max number of categories (use sub-optimal algorithm for larger numbers)
                                    priors, // the array of priors
                                    false,  // calculate variable importance
                                    0,       // number of variables randomly selected at node and used to find the best split(s).
-                                   1,  // max number of trees in the forest
+                                   5,  // max number of trees in the forest
                                    0.001f,               // forrest accuracy
                                    CV_TERMCRIT_ITER |   CV_TERMCRIT_EPS // termination cirteria
                                    );
 
     m_randomForest.train(samples, CV_ROW_SAMPLE, labels, cv::Mat(), cv::Mat(), var_type, cv::Mat(), params);
-
-//    test(filename, numOfSamples, numOfFeatures);
 }
 
-int RandomForest::predict(const cv::Mat& sample)
+float RandomForest::predict(const cv::Mat& sample)
 {
-    int res = (int)m_randomForest.predict(sample, cv::Mat());
-    return res;
+    return m_randomForest.predict(sample, cv::Mat());
 }
 
 float RandomForest::predict_prob(const cv::Mat& sample)
 {
     float res = m_randomForest.predict_prob(sample, cv::Mat());
     return res;
+}
+
+QSize RandomForest::workSize() const
+{
+    return m_workSize;
+}
+
+void RandomForest::setWorkSize(QSize size)
+{
+    m_workSize = size;
+}
+
+int RandomForest::numOfFeatures() const
+{
+    return m_numOfFeatures;
+}
+
+void RandomForest::setNumOfFeatures(int numOfFeatures)
+{
+    m_numOfFeatures = numOfFeatures;
+}
+
+cv::Mat RandomForest::computeFeatureVectors(QString imgPath, int w, int h)
+{
+    cv::Mat featureVector;
+
+    // Scale the image accordingly
+    QImage image;
+    image.load(imgPath);
+    if (image.isNull())
+        return featureVector;
+
+    image = image.scaled(w, h);
+    cv::Mat cvImage = Utility::QImageToCvMat(image);
+
+    featureVector = computeFeatureVectors(cvImage, w, h);
+    return featureVector;
+}
+
+cv::Mat RandomForest::computeFeatureVectors(cv::Mat inputImage, int w, int h)
+{
+    QVector<int> concatenatedFV;
+    ColorFeatureExtractor colorFeatureExtractor;
+    LbpFeatureExtractor lbpFeatureExtractor;
+    CensusFeatureExtractor censusFeatureExtractor;
+    EdgeFeatureExtractor edgeFeatureExtractor;
+
+    // User-defined bins
+    int horizontalBins = w;
+    int verticalBins = h;
+
+    colorFeatureExtractor.compute(inputImage, horizontalBins, verticalBins);
+    concatenatedFV += colorFeatureExtractor.featureVector();
+
+//    lbpFeatureExtractor.compute(inputImage);
+//    concatenatedFV += lbpFeatureExtractor.featureVector();
+
+//    censusFeatureExtractor.compute(inputImage);
+//    concatenatedFV += censusFeatureExtractor.featureVector();
+
+//    edgeFeatureExtractor.compute(inputImage);
+//    concatenatedFV += edgeFeatureExtractor.featureVector();
+
+    m_numOfFeatures = concatenatedFV.length();
+    cv::Mat featureVector = cv::Mat(1, m_numOfFeatures, CV_32FC1);
+    for (int attribute = 0; attribute < m_numOfFeatures; attribute++)
+    {
+        featureVector.at<float>(attribute) = concatenatedFV.at(attribute);
+    }
+
+    return featureVector;
 }
 
 void RandomForest::test(QString filename, int numOfSamples, int numOfFeatures)
@@ -76,8 +155,6 @@ void RandomForest::test(QString filename, int numOfSamples, int numOfFeatures)
         test_sample = samples.row(tsample);
         result = m_randomForest.predict(test_sample, cv::Mat());
 
-        qDebug() << "Testing Sample " << tsample << "-> class result (digit  " << (int) result << ")";
-
         // if the prediction and the (true) testing classification are the same
         // (N.B. openCV uses a floating point decision tree implementation!)
         if (fabs(result - labels.at<float>(tsample, 0)) >= FLT_EPSILON)
@@ -91,6 +168,7 @@ void RandomForest::test(QString filename, int numOfSamples, int numOfFeatures)
         }
     }
 
+    qDebug() << "Training results:";
     qDebug() << "Correct classification: " << correct_class << "(" << (double)correct_class*100/numOfSamples << "%)";
     qDebug() << "Wrong classification: " << wrong_class << "(" << (double)wrong_class*100/numOfSamples << "%)";
 }

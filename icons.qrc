@@ -26,5 +26,6 @@
         <file>qml/icons/target.png</file>
         <file>qml/icons/target_off.png</file>
         <file>qml/icons/target_on.png</file>
+        <file>qml/icons/tick.png</file>
     </qresource>
 </RCC>

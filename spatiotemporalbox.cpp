@@ -21,6 +21,8 @@ SpatioTemporalBox::SpatioTemporalBox(QQuickItem *parent)
     m_isHighlightClusters = false;
     m_isDrawFilteringSTPoints = false;
     m_isDrawClusterEigenLine = false;
+
+    m_displayMode = SpatioTemporalBox::DarkMode;
 }
 
 QVector3D perp(const QVector3D &v)
@@ -352,6 +354,15 @@ void SpatioTemporalBox::loadSpatioTemporalLabelingPoints(const QString fileName)
     update();
 }
 
+void SpatioTemporalBox::changeDisplayMode(DisplayMode mode)
+{
+    if (mode != m_displayMode)
+    {
+        m_displayMode = mode;
+        update();
+    }
+}
+
 void SpatioTemporalBox::init()
 {
     glViewport(0, 0, (GLint)width(), (GLint)height());
@@ -382,8 +393,11 @@ void SpatioTemporalBox::drawSTBox()
 {
     // Draw 3D cube
     glBegin(GL_LINES);
-    glColor3f(1.0,1.0,1.0);
-//    glColor3f(0.0, 0.0, 0.0);
+
+    if (SpatioTemporalBox::DarkMode == m_displayMode)
+        glColor3f(1.0,1.0,1.0);
+    else
+        glColor3f(0.0, 0.0, 0.0);
 
     // front
     glVertex3f(1.0,1.0,1.0);
@@ -444,8 +458,10 @@ void SpatioTemporalBox::drawSTPoints()
 
     if (m_isDrawSTPoints)
     {
-        glColor3f(1.0, 1.0, 1.0);
-        //    glColor3f(0.0, 0.0, 0.0);
+        if (SpatioTemporalBox::DarkMode == m_displayMode)
+            glColor3f(1.0,1.0,1.0);
+        else
+            glColor3f(0.0, 0.0, 0.0);
 
         QList<STPoint> drawingList;
         if (m_isDrawFilteringSTPoints)

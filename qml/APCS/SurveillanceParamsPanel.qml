@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Layouts 1.1
@@ -166,8 +166,52 @@ Item {
 
                     title: qsTr("Hybrid Detector Parameter")
 
-                    Column {
-                        anchors.fill: parent
+                    ColumnLayout {
+                        Layout.fillWidth: true
+
+                        CheckBox {
+                            id: haarCheckbox
+                            text: "Enable Haar-Like features"
+                            checked: false
+                            Layout.minimumWidth: 100
+
+                            onCheckedChanged: {
+                                // TODO
+                            }
+                        }
+
+                        CheckBox {
+                            id: lbpCheckbox
+                            text: "Enable LBP features"
+                            checked: false
+                            Layout.minimumWidth: 100
+
+                            onCheckedChanged: {
+                                // TODO
+                            }
+                        }
+
+                        CheckBox {
+                            id: censusCheckbox
+                            text: "Enable Census features"
+                            checked: false
+                            Layout.minimumWidth: 100
+
+                            onCheckedChanged: {
+                                // TODO
+                            }
+                        }
+
+                        CheckBox {
+                            id: laplacianCheckbox
+                            text: "Enable Laplacian features"
+                            checked: false
+                            Layout.minimumWidth: 100
+
+                            onCheckedChanged: {
+                                // TODO
+                            }
+                        }
                     }
                 }
 
@@ -340,6 +384,17 @@ Item {
 
                             onCheckedChanged: {
                                 surveillanceArea.enableManualLabeling = checked;
+                            }
+                        }
+
+                        CheckBox {
+                            id: inspectionCheckbox
+                            text: "Enable inspection"
+                            checked: false
+                            Layout.minimumWidth: 100
+
+                            onCheckedChanged: {
+                                penguinViewer.enableInspection = checked;
                             }
                         }
                     }

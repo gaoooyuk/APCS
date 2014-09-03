@@ -118,29 +118,8 @@ Rectangle {
 
         Component.onCompleted: {
 //            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_8x24")
-            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_20x60")
-//            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_40x120")
-        }
-    }
-
-    Rectangle {
-        width: 80
-        height: 30
-        color: "white"
-        anchors.centerIn: parent
-
-        Text {
-            anchors.centerIn: parent
-            text: "Train"
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-//                trainingSys.train(12, 36, 0.999, 0.5, 10, true)
-//                trainingSys.train(8, 24, 0.999, 0.5, 6, false)
-                trainingSys.trainColorBins(20, 60);
-            }
+//            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal_20x60")
+            imageModel = trainingSys.getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_images/positives/frontal")
         }
     }
 
@@ -238,6 +217,14 @@ Rectangle {
                 }
             }
         }
+    }
+
+    PerformancePanel {
+        visible: false
+    }
+
+    TestPanel {
+
     }
 
 //    Indicator {

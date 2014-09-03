@@ -33,6 +33,8 @@ cv::Mat CensusFeatureExtractor::compute(cv::Mat inputImage)
     census3x3(frame_gray.data, frame_census.data, w, h);
     frame_census.convertTo(frame_census, CV_8UC1);
 
+    m_featureVector.clear();
+
     return frame_census;
 }
 

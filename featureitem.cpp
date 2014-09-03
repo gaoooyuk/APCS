@@ -109,7 +109,7 @@ void FeatureItem::compute()
     case FeatureItem::ColorBins:
     {
         ColorFeatureExtractor colorFeatureExtractor;
-        cvResult = colorFeatureExtractor.compute(m_imagePath);
+        cvResult = colorFeatureExtractor.compute(m_imagePath, 8, 24);
         break;
     }
 

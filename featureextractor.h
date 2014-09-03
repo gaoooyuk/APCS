@@ -13,9 +13,6 @@ class FeatureExtractor : public QObject
     Q_OBJECT
 public:
     explicit FeatureExtractor(QObject *parent = 0);
-    virtual cv::Mat compute(QString imgPath) = 0;
-    virtual cv::Mat compute(cv::Mat inputImage) = 0;
-
     QVector<int> featureVector() const;
 
 protected:

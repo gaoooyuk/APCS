@@ -2,6 +2,7 @@
 #define RANDOMFOREST_H
 
 #include <QObject>
+#include <QSize>
 #include <opencv2/ml/ml.hpp>
 
 class RandomForest : public QObject
@@ -10,11 +11,20 @@ class RandomForest : public QObject
 public:
     explicit RandomForest(QObject *parent = 0);
     void train(QString filename, int numOfSamples, int numOfFeatures);
-    int predict(const cv::Mat& sample);
+    void test(QString filename, int numOfSamples, int numOfFeatures);
+    float predict(const cv::Mat& sample);
     float predict_prob(const cv::Mat& sample);
 
+    QSize workSize() const;
+    void setWorkSize(QSize size);
+
+    int numOfFeatures() const;
+    void setNumOfFeatures(int numOfFeatures);
+
+    cv::Mat computeFeatureVectors(QString imgPath, int w, int h);
+    cv::Mat computeFeatureVectors(cv::Mat inputImage, int w, int h);
+
 private:
-    void test(QString filename, int numOfSamples, int numOfFeatures);
     int loadData(const char* filename,
                  cv::Mat samples,
                  cv::Mat lables,
@@ -23,6 +33,8 @@ private:
 
 private:
     CvRTrees m_randomForest;
+    QSize m_workSize;
+    int m_numOfFeatures;
 };
 
 #endif // RANDOMFOREST_H
