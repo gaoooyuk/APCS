@@ -14,8 +14,14 @@ RandomForest::RandomForest(QObject *parent) :
     m_numOfFeatures = 0;
 }
 
-void RandomForest::train(QString filename, int numOfSamples, int numOfFeatures)
+void RandomForest::train(QString filename,
+                         int positiveCount,
+                         int negativeCount,
+                         int numOfFeatures)
 {
+    qDebug() << "numOfFeatures:" << numOfFeatures;
+
+    int numOfSamples = positiveCount + negativeCount;
     cv::Mat samples = cv::Mat(numOfSamples, numOfFeatures, CV_32FC1);
     cv::Mat labels = cv::Mat(numOfSamples, 1, CV_32FC1);
 
@@ -30,21 +36,23 @@ void RandomForest::train(QString filename, int numOfSamples, int numOfFeatures)
         return;
     }
 
-    float priors[] = {1,1};  // weights of each classification for classes
+    float priors[] = {(float)positiveCount/numOfSamples, (float)negativeCount/numOfSamples};  // weights of each classification for classes
     CvRTParams params = CvRTParams(50, // max depth
-                                   numOfSamples * 0.01, // min sample count
+                                   numOfSamples * 0.01, // min sample count. (numOfSamples * 0.01)
                                    0, // regression accuracy: N/A here
                                    false, // compute surrogate split, no missing data
-                                   5, // max number of categories (use sub-optimal algorithm for larger numbers)
+                                   2, // max number of categories (use sub-optimal algorithm for larger numbers)
                                    priors, // the array of priors
                                    false,  // calculate variable importance
                                    0,       // number of variables randomly selected at node and used to find the best split(s).
-                                   5,  // max number of trees in the forest
+                                   100,  // max number of trees in the forest
                                    0.001f,               // forrest accuracy
                                    CV_TERMCRIT_ITER |   CV_TERMCRIT_EPS // termination cirteria
                                    );
 
     m_randomForest.train(samples, CV_ROW_SAMPLE, labels, cv::Mat(), cv::Mat(), var_type, cv::Mat(), params);
+
+    qDebug() << "Generated number of trees:" << m_randomForest.get_tree_count();
 }
 
 float RandomForest::predict(const cv::Mat& sample)
@@ -104,20 +112,20 @@ cv::Mat RandomForest::computeFeatureVectors(cv::Mat inputImage, int w, int h)
     EdgeFeatureExtractor edgeFeatureExtractor;
 
     // User-defined bins
-    int horizontalBins = w;
-    int verticalBins = h;
+    int horizontalBins = 2;
+    int verticalBins = 6;
 
     colorFeatureExtractor.compute(inputImage, horizontalBins, verticalBins);
     concatenatedFV += colorFeatureExtractor.featureVector();
 
-//    lbpFeatureExtractor.compute(inputImage);
-//    concatenatedFV += lbpFeatureExtractor.featureVector();
+    lbpFeatureExtractor.compute(inputImage, horizontalBins, verticalBins);
+    concatenatedFV += lbpFeatureExtractor.featureVector();
 
-//    censusFeatureExtractor.compute(inputImage);
-//    concatenatedFV += censusFeatureExtractor.featureVector();
+    censusFeatureExtractor.compute(inputImage, horizontalBins, verticalBins);
+    concatenatedFV += censusFeatureExtractor.featureVector();
 
-//    edgeFeatureExtractor.compute(inputImage);
-//    concatenatedFV += edgeFeatureExtractor.featureVector();
+    edgeFeatureExtractor.compute(inputImage, horizontalBins, verticalBins);
+    concatenatedFV += edgeFeatureExtractor.featureVector();
 
     m_numOfFeatures = concatenatedFV.length();
     cv::Mat featureVector = cv::Mat(1, m_numOfFeatures, CV_32FC1);

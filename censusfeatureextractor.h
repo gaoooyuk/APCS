@@ -8,8 +8,8 @@ class CensusFeatureExtractor : public FeatureExtractor
     Q_OBJECT
 public:
     explicit CensusFeatureExtractor(QObject *parent = 0);
-    cv::Mat compute(QString imgPath);
-    cv::Mat compute(cv::Mat inputImage);
+    cv::Mat compute(QString imgPath, int horizontalBins, int verticalBins);
+    cv::Mat compute(cv::Mat inputImage, int horizontalBins, int verticalBins);
 
 private:
     void census3x3(unsigned char* in, unsigned char* out, int w, int h);

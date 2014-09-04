@@ -78,7 +78,7 @@ void PenguinViewer::start(QString videoFile)
     }
 
     // Load and training random forest classifier
-    m_randomForest.train("cb_classifier_20x60/cb.classifier", 1226, 3600);
+//    m_randomForest.train("cb_classifier_20x60/cb.classifier", 1226, 3600);
 
     m_surveillanceStatus = PenguinViewer::Running;
     emit statusChanged();

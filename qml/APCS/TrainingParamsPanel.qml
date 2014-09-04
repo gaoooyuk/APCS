@@ -562,7 +562,7 @@ Rectangle {
 //                                               24);
 
                             trainingSys.testRF("/Users/apple/Desktop/Courses/Penguin/training_data/positives/validation_8x24",
-                                               "/Users/apple/Desktop/Courses/Penguin/training_data/old_negatives");
+                                               "/Users/apple/Desktop/Courses/Penguin/training_data/negatives");
                         }
                     }
                 }

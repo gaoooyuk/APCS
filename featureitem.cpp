@@ -75,6 +75,10 @@ void FeatureItem::compute()
     if (m_imagePath.isEmpty())
         return;
 
+    // User-defined bins
+    int horizontalBins = 2;
+    int verticalBins = 6;
+
     cv::Mat cvResult;
 
     switch (m_extractorType)
@@ -95,28 +99,28 @@ void FeatureItem::compute()
     case FeatureItem::LBP:
     {
         LbpFeatureExtractor lbpFeatureExtractor;
-        cvResult = lbpFeatureExtractor.compute(m_imagePath);
+        cvResult = lbpFeatureExtractor.compute(m_imagePath, horizontalBins, verticalBins);
         break;
     }
 
     case FeatureItem::CensusFeature:
     {
         CensusFeatureExtractor censusFeatureExtractor;
-        cvResult = censusFeatureExtractor.compute(m_imagePath);
+        cvResult = censusFeatureExtractor.compute(m_imagePath, horizontalBins, verticalBins);
         break;
     }
 
     case FeatureItem::ColorBins:
     {
         ColorFeatureExtractor colorFeatureExtractor;
-        cvResult = colorFeatureExtractor.compute(m_imagePath, 8, 24);
+        cvResult = colorFeatureExtractor.compute(m_imagePath, horizontalBins, verticalBins);
         break;
     }
 
     case FeatureItem::Laplacian:
     {
         EdgeFeatureExtractor edgeFeatureExtractor;
-        cvResult = edgeFeatureExtractor.compute(m_imagePath);
+        cvResult = edgeFeatureExtractor.compute(m_imagePath, horizontalBins, verticalBins);
         break;
     }
 

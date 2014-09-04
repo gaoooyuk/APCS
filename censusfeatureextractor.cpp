@@ -5,7 +5,7 @@ CensusFeatureExtractor::CensusFeatureExtractor(QObject *parent) :
 {
 }
 
-cv::Mat CensusFeatureExtractor::compute(QString imgPath)
+cv::Mat CensusFeatureExtractor::compute(QString imgPath, int horizontalBins, int verticalBins)
 {
     cv::Mat frame_census;
 
@@ -16,24 +16,67 @@ cv::Mat CensusFeatureExtractor::compute(QString imgPath)
         return frame_census;
     }
 
-    frame_census = compute(inputImage);
+    frame_census = compute(inputImage, horizontalBins, verticalBins);
     return frame_census;
 }
 
-cv::Mat CensusFeatureExtractor::compute(cv::Mat inputImage)
+cv::Mat CensusFeatureExtractor::compute(cv::Mat inputImage, int horizontalBins, int verticalBins)
 {
+    m_featureVector.clear();
+
+    // slightly scale the input image to fit the aspect ratio
+    int w = inputImage.cols;
+    while (0 != (w % horizontalBins))
+    {
+        w--;
+    }
+
+    int h = inputImage.rows;
+    while (0 != (h % verticalBins))
+    {
+        h--;
+    }
+
+    cv::resize(inputImage, inputImage, cv::Size(w, h));
+
+    int m_bin_width = inputImage.cols / horizontalBins;
+    int m_bin_height = inputImage.rows / verticalBins;
+
     cv::Mat frame_census;
     cv::Mat frame_gray;
     cv::cvtColor(inputImage, frame_gray, CV_BGR2GRAY);
     frame_gray.copyTo(frame_census);
 
-    int w = frame_gray.cols;
-    int h = frame_gray.rows;
-
     census3x3(frame_gray.data, frame_census.data, w, h);
     frame_census.convertTo(frame_census, CV_8UC1);
 
-    m_featureVector.clear();
+    int numPatterns = pow(2, 8);
+
+    for (int i = 0; i < horizontalBins * verticalBins; i++)
+    {
+        int x = (i % horizontalBins) * m_bin_width;
+        int y = (i / horizontalBins) * m_bin_height;
+
+        QVector<int> codes;
+        codes.resize(numPatterns);
+        codes.fill(0);
+
+        // for each bin of size (m_bin_width, m_bin_height)
+        for (int j = y; j < y + m_bin_height; j++)
+        {
+            for (int k = x; k < x + m_bin_width; k++)
+            {
+                uchar censusCode = frame_census.at<uchar>(j, k);   // (y, x) in OpenCV
+
+                int codeCount;
+                codeCount = codes.at(censusCode);
+                codeCount++;
+                codes.replace(censusCode, codeCount);
+            }
+        }
+
+        m_featureVector += codes;
+    }
 
     return frame_census;
 }

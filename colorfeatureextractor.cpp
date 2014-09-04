@@ -44,7 +44,7 @@ cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage, int horizontalBins, i
     int m_bin_width = inputImage.cols / horizontalBins;
     int m_bin_height = inputImage.rows / verticalBins;
 
-    cv::Scalar color;
+//    cv::Scalar color;
     QVector<int> output_r;
     QVector<int> output_g;
     QVector<int> output_b;
@@ -53,9 +53,16 @@ cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage, int horizontalBins, i
         int x = (i % horizontalBins) * m_bin_width;
         int y = (i / horizontalBins) * m_bin_height;
 
-        int r = 0;
-        int g = 0;
-        int b = 0;
+        QVector<int> r;
+        r.resize(256);
+        r.fill(0);
+        QVector<int> g;
+        g.resize(256);
+        g.fill(0);
+        QVector<int> b;
+        b.resize(256);
+        b.fill(0);
+
         for (int j = y; j < y + m_bin_height; j++)
         {
             for (int k = x; k < x + m_bin_width; k++)
@@ -65,28 +72,38 @@ cv::Mat ColorFeatureExtractor::compute(cv::Mat inputImage, int horizontalBins, i
                 uchar green = intensity.val[1];
                 uchar red = intensity.val[2];
 
-                r += red;
-                g += green;
-                b += blue;
+                int colorCount;
+
+                colorCount = r.at(red);
+                colorCount++;
+                r.replace(red, colorCount);
+
+                colorCount = r.at(green);
+                colorCount++;
+                g.replace(red, colorCount);
+
+                colorCount = r.at(blue);
+                colorCount++;
+                b.replace(red, colorCount);
             }
         }
 
-        // calculate array color for each bin
-        r = r / (m_bin_width * m_bin_height);
-        g = g / (m_bin_width * m_bin_height);
-        b = b / (m_bin_width * m_bin_height);
+//        // calculate average color for each bin
+//        r = r / (m_bin_width * m_bin_height);
+//        g = g / (m_bin_width * m_bin_height);
+//        b = b / (m_bin_width * m_bin_height);
 
-        output_r.append(r);
-        output_g.append(g);
-        output_b.append(b);
+        output_r += r;
+        output_g += g;
+        output_b += b;
 
-        color = cv::Scalar(b, g, r);
+//        color = cv::Scalar(b, g, r);
 
-        // select a ROI
-        cv::Mat roi(frame_colorBins, cv::Rect(x, y, m_bin_width, m_bin_height));
-        // fill the ROI with the averaged color
-        // the original frame_colorBins image will be modified
-        roi = color;
+//        // select a ROI
+//        cv::Mat roi(frame_colorBins, cv::Rect(x, y, m_bin_width, m_bin_height));
+//        // fill the ROI with the averaged color
+//        // the original frame_colorBins image will be modified
+//        roi = color;
     }
 
     m_featureVector += output_r;

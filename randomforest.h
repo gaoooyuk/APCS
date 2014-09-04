@@ -10,7 +10,10 @@ class RandomForest : public QObject
     Q_OBJECT
 public:
     explicit RandomForest(QObject *parent = 0);
-    void train(QString filename, int numOfSamples, int numOfFeatures);
+    void train(QString filename,
+               int positiveCount,
+               int negativeCount,
+               int numOfFeatures);
     void test(QString filename, int numOfSamples, int numOfFeatures);
     float predict(const cv::Mat& sample);
     float predict_prob(const cv::Mat& sample);

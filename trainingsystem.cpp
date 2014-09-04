@@ -4,6 +4,7 @@
 #include "lbpfeatureextractor.h"
 
 #include <QProcess>
+#include <QElapsedTimer>
 
 #include <QDebug>
 
@@ -194,6 +195,14 @@ void TrainingSystem::testVJ(QString posImageFolder,
 
 void TrainingSystem::trainRF(int w, int h)
 {
+
+#define PERFORMANCE_TUNING
+
+#ifdef PERFORMANCE_TUNING
+    QElapsedTimer elapsedTimer;
+    elapsedTimer.start();
+#endif
+
     qDebug() << "TrainingSystem::trainRF started";
     QString folderName = QString("cb_classifier_%1x%2").arg(QString::number(w)).arg(QString::number(h));
 
@@ -202,7 +211,7 @@ void TrainingSystem::trainRF(int w, int h)
             .arg(QString::number(w))
             .arg(QString::number(h));
     QStringList positiveSampleList =  getAllFilesOfDir(posFolder);
-    QStringList negativeSampleList =  getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_data/old_negatives");
+    QStringList negativeSampleList =  getAllFilesOfDir("/Users/apple/Desktop/Courses/Penguin/training_data/negatives");
 
     // Create output dir
     QString dirPath = QDir::currentPath() + QDir::separator() + folderName;
@@ -297,17 +306,26 @@ void TrainingSystem::trainRF(int w, int h)
     // Load and train random forest classifier
     m_randomForest.setWorkSize(QSize(w, h));
     m_randomForest.setNumOfFeatures(posFVLen);
-    m_randomForest.train(QString("cb_classifier_%1x%2/cb.classifier").arg(w).arg(h), positiveCount + negativeCount, m_randomForest.numOfFeatures());
+    m_randomForest.train(QString("cb_classifier_%1x%2/cb.classifier").arg(w).arg(h),
+                         positiveCount,
+                         negativeCount,
+                         m_randomForest.numOfFeatures());
 
     // training error
 //    m_randomForest.test(QString("cb_classifier_%1x%2/cb.classifier").arg(w).arg(h), positiveCount + negativeCount, m_randomForest.numOfFeatures());
 
     qDebug() << "TrainingSystem::trainRF finished";
+
+#ifdef PERFORMANCE_TUNING
+    qDebug() << "TrainingSystem::trainRF elapsed time:" << elapsedTimer.elapsed();
+#endif
 }
 
 void TrainingSystem::testRF(QString posImageFolder,
                             QString negImageFolder)
 {
+    qDebug() << "Start testing Random Forest";
+
     QStringList posImageList =  getAllFilesOfDir(posImageFolder);
     QStringList negImageList =  getAllFilesOfDir(negImageFolder);
     int positiveCount = posImageList.count();
